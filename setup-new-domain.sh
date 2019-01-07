@@ -1,36 +1,41 @@
 #!/bin/bash
 
+# Set up variables for server IP, user, and domains directory
 SERVER="[INSERT_SERVER_IP]"
 USER="[INSERT_USERNAME]"
 DOMAINS_DIRECTORY="/home/$USER/domains"
 
+# Set up formatting for use later
 BOLD='\e[1m'
 BOLD_RED='\e[1;31m'
 BOLD_GREEN='\e[1;32m'
-END_COLOR='\e[0m' # End color
+END_COLOR='\e[0m' # This ends formatting
 
 echo What is the domain name, including TLD?
-
 read DOMAIN_NAME
 
+# Create root directory for domain
 if sudo mkdir $DOMAINS_DIRECTORY/$DOMAIN_NAME; then
         echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Created root directory at $DOMAINS_DIRECTORY/$DOMAIN_NAME"
 else
         echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot create root directory at $DOMAINS_DIRECTORY/$DOMAIN_NAME"
 fi
 
+# Create public html directory
 if sudo mkdir $DOMAINS_DIRECTORY/$DOMAIN_NAME/html; then
         echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Created public html directory at $DOMAINS_DIRECTORY/$DOMAIN_NAME/html"
 else
         echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot create public html directory at $DOMAINS_DIRECTORY/$DOMAIN_NAME/html"
 fi
 
+# Change permissions for domain directory to specified user
 if sudo chown -R $USER $DOMAINS_DIRECTORY/$DOMAIN_NAME; then
         echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Changed permissions of $DOMAINS_DIRECTORY/$DOMAIN_NAME to $USER"
 else
         echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot change permissions of $DOMAINS_DIRECTORY/$DOMAIN_NAME to $USER"
 fi
 
+# If an index.html file doesn't exist, create a placeholder one
 if [ ! -f $DOMAINS_DIRECTORY/$DOMAIN_NAME/html/index.html ]; then
 	touch $DOMAINS_DIRECTORY/$DOMAIN_NAME/html/index.html
 
@@ -39,10 +44,12 @@ if [ ! -f $DOMAINS_DIRECTORY/$DOMAIN_NAME/html/index.html ]; then
 	else
 	        echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot create placeholder index.html at $DOMAINS_DIRECTORY/$DOMAIN_NAME/html/index.html"
 	fi
+else
+	echo -e "${BOLD}PASSED${END_COLOR} Did not create placeholder index.html, file already exists at $DOMAINS_DIRECTORY/$DOMAIN_NAME/html/index.html"
 fi
 
+# Create a VirtualHost config file that points to the domain directory
 sudo touch /etc/apache2/sites-available/$DOMAIN_NAME.conf
-
 if echo "<VirtualHost *:80>
     ServerName $DOMAIN_NAME
     ServerAlias www.$DOMAIN_NAME
@@ -61,18 +68,21 @@ else
 	echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot create Apache config file at /etc/apache2/sites-available/$DOMAIN_NAME.conf"
 fi
 
+# Enable site in Apache
 if sudo a2ensite $DOMAIN_NAME > /dev/null; then
 	echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Enabled site $DOMAIN_NAME in Apache"
 else
 	echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot enable site $DOMAIN_NAME in Apache"
 fi
 
+# Reload Apache
 if sudo service apache2 reload; then
 	echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Reloaded Apache"
 else
 	echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot reload Apache"
 fi
 
+# Optional: Request SSL certificate from Let's Encrypt
 read -r -p "Do you want to setup HTTPS with Let's Encrypt? [y/N] " ssl_certificate_setup_response
 if [[ "$ssl_certificate_setup_response" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
 	echo "Requesting certificate from Let's Encrypt for $DOMAIN_NAME"
@@ -85,24 +95,28 @@ else
 	HTTPS="false"
 fi
 
+# Optional: Set up a bare Git repository in the domain directory
 read -r -p "Do you want to setup a Git repository for $DOMAIN_NAME? [y/N] " git_setup_response
 if [[ "$git_setup_response" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
 	
+	# Remove placeholder file if setting up a Git repository to ensure working directory is empty
 	if sudo rm $DOMAINS_DIRECTORY/$DOMAIN_NAME/html/index.html; then
 		echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Removed placeholder index.html at $DOMAINS_DIRECTORY/$DOMAIN_NAME/html/index.html"
 	else
 		echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot remove placeholder index.html at $DOMAINS_DIRECTORY/$DOMAIN_NAME/html/index.html"
 	fi
 	
+	# Initialize empty Git repository
 	if git init --bare $DOMAINS_DIRECTORY/$DOMAIN_NAME/$DOMAIN_NAME.git; then
 		echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Created empty Git repository at $DOMAINS_DIRECTORY/$DOMAIN_NAME/$DOMAIN_NAME.git"
 	else
 		echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot create empty Git repository at $DOMAINS_DIRECTORY/$DOMAIN_NAME/$DOMAIN_NAME.git"
 	fi
 	
+	# Set up a hook that deploys any commits made to this repo to the working directory 
 	sudo touch $DOMAINS_DIRECTORY/$DOMAIN_NAME/$DOMAIN_NAME.git/hooks/post-receive
 	sudo chmod +x $DOMAINS_DIRECTORY/$DOMAIN_NAME/$DOMAIN_NAME.git/hooks/post-receive
-	
+
 	if echo "#!/bin/bash
 echo -e \"${BOLD_GREEN}SUCCESS${END_COLOR} Deployed master to $DOMAINS_DIRECTORY/$DOMAIN_NAME/html\"
 git --work-tree=$DOMAINS_DIRECTORY/$DOMAIN_NAME/html --git-dir=$DOMAINS_DIRECTORY/$DOMAIN_NAME/$DOMAIN_NAME.git checkout -f" | sudo tee $DOMAINS_DIRECTORY/$DOMAIN_NAME/$DOMAIN_NAME.git/hooks/post-receive > /dev/null; then
@@ -118,6 +132,7 @@ else
 	GIT="false"
 fi
 
+# Show confirmation messages depending on optional steps
 echo -e "\n------------------------------------"
 echo -e "--------------- ${BOLD}DONE${END_COLOR} ---------------"
 echo -e "------------------------------------ \n"
