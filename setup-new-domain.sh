@@ -48,20 +48,39 @@ else
 	echo -e "${BOLD}PASSED${END_COLOR} Did not create placeholder index.html, file already exists at $DOMAINS_DIRECTORY/$DOMAIN_NAME/html/index.html"
 fi
 
+# Optional: Pick PHP version
+read -r -p "Do you want to use legacy PHP version 5.6 for $DOMAIN_NAME? [y/N] " USE_LEGACY_PHP
+if [[ "$USE_LEGACY_PHP" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
+	echo -e "${BOLD}LEGACY PHP${END_COLOR} Using legacy PHP 5.6 for $DOMAIN_NAME"
+	
+	LEGACY_PHP_VIRTUALHOST_ADDON="
+    <FilesMatch \.php$>
+        SetHandler 'proxy:unix:/var/run/php/php5.6-fpm.sock|fcgi://localhost/'
+    </FilesMatch>
+"
+else
+	echo -e "${BOLD}NEW PHP${END_COLOR} Using default PHP version for $DOMAIN_NAME"
+	
+	LEGACY_PHP_VIRTUALHOST_ADDON=""
+fi
+
 # Create a VirtualHost config file that points to the domain directory
 sudo touch /etc/apache2/sites-available/$DOMAIN_NAME.conf
 if echo "<VirtualHost *:80>
+	
     ServerName $DOMAIN_NAME
     ServerAlias www.$DOMAIN_NAME
     ServerAdmin www@noshado.ws
     DocumentRoot $DOMAINS_DIRECTORY/$DOMAIN_NAME/html
+    
     <Directory $DOMAINS_DIRECTORY/$DOMAIN_NAME/html>
-            AllowOverride all
-            Require all granted
+        AllowOverride all
+        Require all granted
     </Directory>
-
+	$LEGACY_PHP_VIRTUALHOST_ADDON
     ErrorLog /var/log/apache2/$DOMAIN_NAME-error.log
     CustomLog /var/log/apache2/$DOMAIN_NAME-access.log combined
+	
 </VirtualHost>" | sudo tee /etc/apache2/sites-available/$DOMAIN_NAME.conf > /dev/null; then
 	echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Created Apache config file at /etc/apache2/sites-available/$DOMAIN_NAME.conf"
 else
@@ -83,8 +102,8 @@ else
 fi
 
 # Optional: Request SSL certificate from Let's Encrypt
-read -r -p "Do you want to setup HTTPS with Let's Encrypt? [y/N] " ssl_certificate_setup_response
-if [[ "$ssl_certificate_setup_response" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
+read -r -p "Do you want to setup HTTPS with Let's Encrypt? [y/N] " SSL_CERTIFICATE_SETUP
+if [[ "$SSL_CERTIFICATE_SETUP" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
 	echo "Requesting certificate from Let's Encrypt for $DOMAIN_NAME"
 	/opt/certbot/certbot-auto --apache -d $DOMAIN_NAME
 	
@@ -96,8 +115,8 @@ else
 fi
 
 # Optional: Set up a bare Git repository in the domain directory
-read -r -p "Do you want to setup a Git repository for $DOMAIN_NAME? [y/N] " git_setup_response
-if [[ "$git_setup_response" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
+read -r -p "Do you want to setup a Git repository for $DOMAIN_NAME? [y/N] " GIT_SETUP
+if [[ "$GIT_SETUP" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
 	
 	# Remove placeholder file if setting up a Git repository to ensure working directory is empty
 	if sudo rm $DOMAINS_DIRECTORY/$DOMAIN_NAME/html/index.html; then
