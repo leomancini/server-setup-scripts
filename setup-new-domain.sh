@@ -105,7 +105,7 @@ fi
 read -r -p "Do you want to setup HTTPS with Let's Encrypt? [y/N] " SSL_CERTIFICATE_SETUP
 if [[ "$SSL_CERTIFICATE_SETUP" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
 	echo "Requesting certificate from Let's Encrypt for $DOMAIN_NAME"
-	/opt/certbot/certbot-auto --apache -d $DOMAIN_NAME,www.$DOMAIN_NAME
+	sudo certbot --apache -d $DOMAIN_NAME,www.$DOMAIN_NAME
 	
 	HTTPS="true"
 else
