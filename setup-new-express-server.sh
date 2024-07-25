@@ -3,6 +3,7 @@
 # Set up variables for server IP, user, and domains directory
 SERVER="[INSERT_SERVER_IP]"
 USER="[INSERT_USERNAME]"
+ADMIN_CONTACT="[INSERT_ADMIN_CONTACT]"
 SERVICES_DIRECTORY="/home/$USER/services"
 
 # Set up formatting for use later
@@ -113,7 +114,7 @@ if echo "<VirtualHost *:80>
 	
     ServerName $SERVICE_AND_DOMAIN
     ServerAlias www.$SERVICE_AND_DOMAIN
-    ServerAdmin www@noshado.ws
+    ServerAdmin $ADMIN_CONTACT
 
     ProxyRequests Off
     ProxyPreserveHost On
