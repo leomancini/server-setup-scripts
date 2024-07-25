@@ -21,11 +21,11 @@ else
     echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot disable site in Apache"
 fi
 
-# Remove Apache config file
+# Delete Apache config file
 if sudo rm -f /etc/apache2/sites-available/$SERVICE_AND_DOMAIN.conf && sudo rm -f /etc/apache2/sites-available/$SERVICE_AND_DOMAIN-le-ssl.conf; then
-    echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Removed Apache config file"
+    echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Deleted Apache config file"
 else
-    echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot remove Apache config file"
+    echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot delete Apache config file"
 fi
 
 # Delete site directory
