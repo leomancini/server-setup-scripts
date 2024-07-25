@@ -3,7 +3,7 @@
 # Set up variables for server IP, user, and domains directory
 SERVER="[INSERT_SERVER_IP]"
 USER="[INSERT_USERNAME]"
-DOMAINS_DIRECTORY="/home/$USER/domains"
+SERVICES_DIRECTORY="/home/$USER/services"
 
 # Set up formatting for use later
 BOLD='\e[1m'
