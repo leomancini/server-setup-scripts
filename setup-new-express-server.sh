@@ -115,7 +115,7 @@ else
     echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot start node"
 fi
 
-# Create a VirtualHost config file that points to the domain directory
+# Create a VirtualHost config file that proxies requests to node
 sudo touch /etc/apache2/sites-available/$SERVICE_AND_DOMAIN.conf
 if echo "<VirtualHost *:80>
 	
