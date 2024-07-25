@@ -95,9 +95,9 @@ fi
 
 # Install node modules
 if cd $SERVICES_DIRECTORY/$SERVICE_AND_DOMAIN && npm install; then
-    echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Installed node modules for $SERVICE_AND_DOMAIN"
+    echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Installed node modules"
 else
-    echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot install node modules for $SERVICE_AND_DOMAIN"
+    echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot install node modules"
 fi
 
 # Start node process
