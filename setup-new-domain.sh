@@ -156,7 +156,6 @@ fi
 echo -e "\n------------------------------------"
 echo -e "--------------- ${BOLD}DONE${END_COLOR} ---------------"
 echo -e "------------------------------------ \n"
-
 echo -e "${BOLD}*** $DOMAIN_NAME is now set up! ***${END_COLOR}\n"
 
 if [[ $HTTPS == "true" ]]; then
