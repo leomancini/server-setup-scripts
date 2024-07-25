@@ -24,7 +24,7 @@
 5. Create basic package.json file
 6. Install node modules
 7. Start node process
-8. Create a VirtualHost config file that points to the domain directory
+8. Create a VirtualHost config file that proxies requests to node
 9. Enable site in Apache
 10. Reload Apache
 11. Generate SSL certificate with Let's Encrypt
