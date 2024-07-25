@@ -3,6 +3,7 @@
 # Set up variables for server IP, user, and domains directory
 SERVER="[INSERT_SERVER_IP]"
 USER="[INSERT_USERNAME]"
+ADMIN_CONTACT="[INSERT_ADMIN_CONTACT]"
 DOMAINS_DIRECTORY="/home/$USER/domains"
 
 # Set up formatting for use later
@@ -70,7 +71,7 @@ if echo "<VirtualHost *:80>
 	
     ServerName $DOMAIN_NAME
     ServerAlias www.$DOMAIN_NAME
-    ServerAdmin www@noshado.ws
+    ServerAdmin $ADMIN_CONTACT
     DocumentRoot $DOMAINS_DIRECTORY/$DOMAIN_NAME/html
     
     <Directory $DOMAINS_DIRECTORY/$DOMAIN_NAME/html>
