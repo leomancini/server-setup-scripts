@@ -1,10 +1,11 @@
 #!/bin/bash
 
 # Set up variables for server IP, user, and domains directory
-SERVER="[INSERT_SERVER_IP]"
-USER="[INSERT_USERNAME]"
-ADMIN_CONTACT="[INSERT_ADMIN_CONTACT]"
+SERVER="root.noshado.ws"
+USER="leo"
+ADMIN_CONTACT="www@noshado.ws"
 APPS_DIRECTORY="/home/$USER/react-apps"
+DEFAULT_DOMAIN_FOR_SUBDOMAINS="leo.gd"
 
 # Set up formatting for use later
 BOLD='\e[1m'
@@ -12,11 +13,62 @@ BOLD_RED='\e[1;31m'
 BOLD_GREEN='\e[1;32m'
 END_COLOR='\e[0m' # This ends formatting
 
-read -p "App Name: " APP_DISPLAY_NAME
-read -p "App ID: " APP_ID
-read -p "URL: " DOMAIN_NAME
+# Function to convert app name to hyphenated app ID
+generate_app_id() {
+  echo "$1" | tr '[:upper:]' '[:lower:]' | tr ' ' '-'
+}
 
-echo -e " "
+# Prompt for the app name and generate the default app ID
+read -p "App Name (Title Case): " APP_NAME
+DEFAULT_APP_ID=$(generate_app_id "$APP_NAME")
+
+# Prompt for the app ID with the default value
+read -p "App ID (Default: "${DEFAULT_APP_ID}"): " APP_ID
+APP_ID=${APP_ID:-$DEFAULT_APP_ID}
+
+# Prompt for the domain name with the default value
+DEFAULT_DOMAIN_NAME="$APP_ID.$DEFAULT_DOMAIN_FOR_SUBDOMAINS"
+read -p "URL (Default: "${DEFAULT_DOMAIN_NAME}"): " DOMAIN_NAME
+DOMAIN_NAME=${DOMAIN_NAME:-$DEFAULT_DOMAIN_NAME}
+
+echo " "
+
+# Display the collected information
+echo "App Name: $APP_NAME"
+echo "App ID: $APP_ID"
+echo "URL: https://$DOMAIN_NAME"
+
+echo " "
+
+# Prompt for sudo password
+read -s -p "Enter sudo password: " SUDO_PASSWORD
+echo
+
+# Function to keep sudo session alive
+keep_sudo_alive() {
+    while true; do
+        echo "$SUDO_PASSWORD" | sudo -S -v
+        sleep 60
+    done
+}
+
+# Start the keep-alive function in the background
+keep_sudo_alive &
+SUDO_KEEP_ALIVE_PID=$!
+
+# Make sure to kill the keep-alive process on exit
+trap 'kill $SUDO_KEEP_ALIVE_PID' EXIT
+
+echo " "
+
+# Initial check to see if the provided password is correct
+if ! echo "$SUDO_PASSWORD" | sudo -S echo > /dev/null 2>&1; then
+    echo -e "${BOLD_RED}FAILED${END_COLOR} Password incorrect"
+    echo " "
+    exit 1
+fi
+
+echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Password correct"
 
 # Create root directory for app
 if sudo mkdir $APPS_DIRECTORY/$APP_ID; then
@@ -107,7 +159,7 @@ if echo "<!DOCTYPE html>
   <head>
     <meta charset=\"utf-8\" />
     <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />
-    <title>$APP_DISPLAY_NAME</title>
+    <title>$APP_NAME</title>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
@@ -123,8 +175,8 @@ fi
 # Create a basic public/manifest.json
 sudo touch $APPS_DIRECTORY/$APP_ID/public/manifest.json
 if echo "{
-  \"short_name\": \"$APP_DISPLAY_NAME\",
-  \"name\": \"$APP_DISPLAY_NAME\",
+  \"short_name\": \"$APP_NAME\",
+  \"name\": \"$APP_NAME\",
   \"start_url\": \".\",
   \"display\": \"standalone\",
   \"theme_color\": \"#000000\",
@@ -149,7 +201,7 @@ fi
 
 # Create a basic README.md
 sudo touch $APPS_DIRECTORY/$APP_ID/README.md
-if echo "# $APP_DISPLAY_NAME
+if echo "# $APP_NAME
 " | sudo tee $APPS_DIRECTORY/$APP_ID/README.md > /dev/null; then
     echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Created basic README.md file"
 else
@@ -207,12 +259,11 @@ fi
 sudo touch $APPS_DIRECTORY/$APP_ID/setup-log.json
 if echo "{
   \"app_id\": \"$APP_ID\",
-  \"app_name\": \"$APP_DISPLAY_NAME\",
+  \"app_name\": \"$APP_NAME\",
   \"domain\": \"https://$DOMAIN_NAME\",
   \"author\": \"$USER\",
-  \"created_on\": \"$(date)\",
-}
-" | sudo tee $APPS_DIRECTORY/$APP_ID/setup-log.json > /dev/null; then
+  \"created_on\": \"$(date)\"
+}" | sudo tee $APPS_DIRECTORY/$APP_ID/setup-log.json > /dev/null; then
     echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Created setup-log.json file"
 else
     echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot create setup-log.json file"
@@ -300,7 +351,6 @@ sudo touch $APPS_DIRECTORY/$APP_ID/.gitignore
 if echo '.env
 node_modules/
 build/
-output.log
 ' | sudo tee $APPS_DIRECTORY/$APP_ID/.gitignore > /dev/null; then
     echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Created basic gitignore file"
 else
@@ -327,7 +377,7 @@ echo "Installing dependencies"
 npm install || { echo "npm install failed"; exit 1; }
 
 echo "Building app for production"
-npm run build > ./output.log 2>&1 &
+npm run build
 
 echo -e \"${BOLD_GREEN}SUCCESS${END_COLOR} Deployed main to $APPS_DIRECTORY/$APP_ID\"
 " | sudo tee $APPS_DIRECTORY/$APP_ID/.git/hooks/post-receive > /dev/null; then
