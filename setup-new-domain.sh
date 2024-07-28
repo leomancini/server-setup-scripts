@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Set up variables for server IP, user, and domains directory
-SERVER="[INSERT_SERVER_IP]"
-USER="[INSERT_USERNAME]"
-ADMIN_CONTACT="[INSERT_ADMIN_CONTACT]"
+# Set up variables
+SERVER="root.noshado.ws"
+USER="leo"
+ADMIN_CONTACT="www@noshado.ws"
 DOMAINS_DIRECTORY="/home/$USER/domains"
 
 # Set up formatting for use later
