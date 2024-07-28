@@ -116,7 +116,5 @@ fi
 echo -e "\n------------------------------------"
 echo -e "--------------- ${BOLD}DONE${END_COLOR} ---------------"
 echo -e "------------------------------------ \n"
-
 echo -e "${BOLD_RED}*** $SERVICE_ID is now removed! ***${END_COLOR}\n"
-
 echo -e " "
