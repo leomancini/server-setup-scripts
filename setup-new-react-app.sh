@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Set up variables for server IP, user, and domains directory
+# Set up variables
 SERVER="root.noshado.ws"
 USER="leo"
 ADMIN_CONTACT="www@noshado.ws"
@@ -47,7 +47,7 @@ echo
 # Function to keep sudo session alive
 keep_sudo_alive() {
     while true; do
-        echo "$SUDO_PASSWORD" | sudo -S -v
+        echo "$SUDO_PASSWORD" | sudo -S -v > /dev/null 2>&1
         sleep 60
     done
 }
