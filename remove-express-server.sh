@@ -44,21 +44,21 @@ keep_sudo_alive() {
     done
 }
 
+echo " "
+
+# Initial check to see if the provided password is correct
+if ! echo "$SUDO_PASSWORD" | sudo -kS echo > /dev/null 2>&1; then
+    echo -e "${BOLD_RED}FAILED${END_COLOR} Password incorrect"
+    echo " "
+    exit 1
+fi
+
 # Start the keep-alive function in the background
 keep_sudo_alive &
 SUDO_KEEP_ALIVE_PID=$!
 
 # Make sure to kill the keep-alive process on exit
 trap 'kill $SUDO_KEEP_ALIVE_PID' EXIT
-
-echo " "
-
-# Initial check to see if the provided password is correct
-if ! echo "$SUDO_PASSWORD" | sudo -S echo > /dev/null 2>&1; then
-    echo -e "${BOLD_RED}FAILED${END_COLOR} Password incorrect"
-    echo " "
-    exit 1
-fi
 
 echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Password correct"
 
