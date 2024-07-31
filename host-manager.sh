@@ -29,6 +29,9 @@ print_menu() {
     elif [ "$mode" == "remove" ]; then
         selected_symbol="-"
         option_color=$(tput setaf 1) # Red
+    elif [ "$mode" == "reload" ]; then
+        selected_symbol="↻"
+        option_color=$(tput setaf 6) # Cyan
     else
         selected_symbol="→"
         option_color=$(tput sgr0) # Default color
@@ -44,7 +47,7 @@ print_menu() {
         done
         echo " "
         if [ $selected -eq ${#options[@]} ]; then
-            echo -e "$(tput setaf 6)$(tput bold)← Back$(tput sgr0)"
+            echo -e "$(tput setaf 5)$(tput bold)← Back$(tput sgr0)"
         else
             echo "  Back"
         fi
@@ -57,10 +60,12 @@ print_menu() {
                     echo -e "$(tput setaf 2)$(tput bold)+ ${options[i]}$(tput sgr0)"
                 elif [ "${options[i]}" == "Remove Existing Instance" ]; then
                     echo -e "$(tput setaf 1)$(tput bold)- ${options[i]}$(tput sgr0)"
+                elif [ "${options[i]}" == "Reload Existing Instance" ]; then
+                    echo -e "$(tput setaf 6)$(tput bold)↻ ${options[i]}$(tput sgr0)"
                 elif [ "${options[i]}" == "Exit" ]; then
-                    echo -e "$(tput setaf 6)$(tput bold)✕ ${options[i]}$(tput sgr0)"
+                    echo -e "$(tput setaf 5)$(tput bold)✕ ${options[i]}$(tput sgr0)"
                 else
-                    echo -e "$(tput setaf 6)$(tput bold)→ ${options[i]}$(tput sgr0)"
+                    echo -e "$(tput setaf 5)$(tput bold)→ ${options[i]}$(tput sgr0)"
                 fi
             else
                 echo -e "$(tput sgr0)  ${options[i]}$(tput sgr0)"
@@ -93,7 +98,7 @@ navigate_menu() {
                         selected=${#options[@]}
                     fi
                     # Skip the unselectable blank option
-                    if [ $level -eq 1 ] && [ $selected -eq 2 ]; then
+                    if [ $level -eq 1 ] && [ $selected -eq 3 ]; then
                         ((selected--))
                         if [ $selected -lt 0 ]; then
                             selected=${#options[@]}
@@ -106,7 +111,7 @@ navigate_menu() {
                         selected=0
                     fi
                     # Skip the unselectable blank option
-                    if [ $level -eq 1 ] && [ $selected -eq 2 ]; then
+                    if [ $level -eq 1 ] && [ $selected -eq 3 ]; then
                         ((selected++))
                         if [ $selected -gt ${#options[@]} ]; then
                             selected=0
@@ -140,8 +145,8 @@ execute_ssh_command() {
 display_remote_directory() {
     local level=$1
     local directory=$2
-    local header=$3
-    local remove_type=$4
+    local type=$3
+    local action=$4
 
     local folders=$(execute_ssh_command "find $directory -maxdepth 1 -mindepth 1 -type d" "false")
 
@@ -149,7 +154,7 @@ display_remote_directory() {
 
     # Check if the SSH command returned any directories
     if [ -z "$folders" ]; then
-        echo "No ${remove_type}s found in $directory"
+        echo "Nothing found in $directory"
         echo " "
         read -p "$(tput bold)DONE$(tput sgr0) Press enter to continue"
         return 1 # Indicate that back was selected
@@ -165,24 +170,32 @@ display_remote_directory() {
 
     printf "%s\n" "${options[@]}" >&2
 
-    navigate_menu $level "$header" "remove" "${options[@]}"
+    navigate_menu $level "$action" "$type" "${options[@]}"
     selected_folder=${options[$selected_option]}
     
     if [ $selected_option -eq ${#options[@]} ]; then
         return 1 # Indicate that back was selected
     else
-        case $remove_type in
-            "React App")
+        case $action in
+            "Remove React App")
                 echo "Removing React App: $selected_folder"
                 execute_ssh_command "bash $SCRIPTS_DIRECTORY/remove-react-app.sh --app-id $selected_folder" "true"
                 ;;
-            "Express Server")
+            "Remove Express Server")
                 echo "Removing Express Server: $selected_folder"
                 execute_ssh_command "bash $SCRIPTS_DIRECTORY/remove-express-server.sh --service-id $selected_folder" "true"
                 ;;
-            "PHP/HTML Server")
+            "Remove PHP/HTML Server")
                 echo "Removing PHP/HTML Server: $selected_folder"
                 execute_ssh_command "bash $SCRIPTS_DIRECTORY/remove-php-html-server.sh --domain-name $selected_folder" "true"
+                ;;
+            "Rebuild React App")
+                echo "Rebuilding React App: $selected_folder"
+                execute_ssh_command "bash $SCRIPTS_DIRECTORY/rebuild-react-app.sh --app-id $selected_folder" "true"
+                ;;
+            "Restart Express Server")
+                echo "Restarting Express Server: $selected_folder"
+                execute_ssh_command "bash $SCRIPTS_DIRECTORY/restart-express-server.sh --service-id $selected_folder" "true"
                 ;;
         esac
         return 0
@@ -191,11 +204,11 @@ display_remote_directory() {
 
 while true; do
     # Level 1 Menu
-    level1_options=("Create New Instance" "Remove Existing Instance" "" "Exit")
+    level1_options=("Create New Instance" "Remove Existing Instance" "Reload Existing Instance" "" "Exit")
     navigate_menu 1 "Host Manager" "" "${level1_options[@]}"
     level1_selection=$selected_option
 
-    if [ $level1_selection -eq 3 ]; then
+    if [ $level1_selection -eq 4 ]; then
         break
     elif [ $level1_selection -eq 0 ]; then
         while true; do
@@ -234,19 +247,46 @@ while true; do
                 case $remove_selection in
                     0)
                         # Level 3 (Remove React App)
-                        if ! display_remote_directory 3 "$APPS_DIRECTORY" "Remove React App" "React App"; then
+                        if ! display_remote_directory 3 "$APPS_DIRECTORY" "remove" "Remove React App"; then
                             continue
                         fi
                         ;;
                     1)
                         # Level 3 (Remove Express Server)
-                        if ! display_remote_directory 3 "$SERVICES_DIRECTORY" "Remove Express Server" "Express Server"; then
+                        if ! display_remote_directory 3 "$SERVICES_DIRECTORY" "remove" "Remove Express Server"; then
                             continue
                         fi
                         ;;
                     2)
                         # Level 3 (Remove PHP/HTML Server)
-                        if ! display_remote_directory 3 "$DOMAINS_DIRECTORY" "Remove PHP/HTML Server" "PHP/HTML Server"; then
+                        if ! display_remote_directory 3 "$DOMAINS_DIRECTORY" "remove" "Remove PHP/HTML Server"; then
+                            continue
+                        fi
+                        ;;
+                esac
+            fi
+        done
+    elif [ $level1_selection -eq 2 ]; then
+        while true; do
+            # Level 2 (Remove)
+            reload_options=("React App" "Express Server")
+            # remove_options=("React App" "Express Server" "PHP/HTML Server")
+            navigate_menu 2 "Reload Existing Instance" "reload" "${reload_options[@]}"
+            reload_selection=$selected_option
+            
+            if [ $reload_selection -eq ${#reload_options[@]} ]; then
+                break
+            else
+                case $reload_selection in
+                    0)
+                        # Level 3 (Rebuild React App)
+                        if ! display_remote_directory 3 "$APPS_DIRECTORY" "reload" "Rebuild React App"; then
+                            continue
+                        fi
+                        ;;
+                    1)
+                        # Level 3 (Restart Express Server)
+                        if ! display_remote_directory 3 "$SERVICES_DIRECTORY" "reload" "Restart Express Server"; then
                             continue
                         fi
                         ;;
