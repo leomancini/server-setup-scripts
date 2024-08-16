@@ -21,17 +21,18 @@
 2. Create root directory for domain
 3. Change permissions for domain directory to specified user
 4. Create a basic server
-5. Create basic package.json file
-6. Install node modules
-7. Start node process
-8. Create a VirtualHost config file that proxies requests to node
-9. Enable site in Apache
-10. Reload Apache
-11. Generate SSL certificate with Let's Encrypt
-12. Initialize Git repository
-13. Create basic gitignore file
-14. Commit basic code
-15. Set up a hook that deploys any commits made to this repo
+5. Create a basic README.md
+6. Create basic package.json file
+7. Install node modules
+8. Start node process
+9. Create a VirtualHost config file that proxies requests to node
+10. Enable site in Apache
+11. Reload Apache
+12. Generate SSL certificate with Let's Encrypt
+13. Initialize Git repository
+14. Create basic gitignore file
+15. Commit basic code
+16. Set up a hook that deploys any commits made to this repo
 
 ## [remove-express-server.sh](https://github.com/leomancini/server-setup-scripts/blob/main/remove-express-server.sh)
 #### Decommission an Express server created by [setup-new-express-server.sh](https://github.com/leomancini/server-setup-scripts/blob/main/setup-new-express-server.sh)
