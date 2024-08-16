@@ -132,6 +132,17 @@ else
 	echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot create basic server file"
 fi
 
+# Create a basic README.md
+sudo touch $SERVICES_DIRECTORY/$SERVICE_ID/README.md
+if echo "# $SERVICE_NAME
+Identifier: $SERVICE_ID
+Created: $(date)
+" | sudo tee $SERVICES_DIRECTORY/$SERVICE_ID/README.md > /dev/null; then
+    echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Created basic README.md file"
+else
+    echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot create basic README.md file"
+fi
+
 # Create basic package.json file
 sudo touch $SERVICES_DIRECTORY/$SERVICE_ID/package.json
 if echo '{
@@ -239,6 +250,7 @@ fi
 # Create basic gitignore file
 sudo touch $SERVICES_DIRECTORY/$SERVICE_ID/.gitignore
 if echo '.env
+.DS_Store
 node_modules/
 output.log
 ' | sudo tee $SERVICES_DIRECTORY/$SERVICE_ID/.gitignore > /dev/null; then
