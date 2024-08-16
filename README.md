@@ -34,6 +34,14 @@
 15. Commit basic code
 16. Set up a hook that deploys any commits made to this repo
 
+## [restart-express-server.sh](https://github.com/leomancini/server-setup-scripts/blob/main/restart-express-server.sh)
+#### Restart an Express server created by [setup-new-express-server.sh](https://github.com/leomancini/server-setup-scripts/blob/main/setup-new-express-server.sh)
+
+1. Stop node process
+2. Install node modules
+3. Start node process
+4. Reload Apache
+
 ## [remove-express-server.sh](https://github.com/leomancini/server-setup-scripts/blob/main/remove-express-server.sh)
 #### Decommission an Express server created by [setup-new-express-server.sh](https://github.com/leomancini/server-setup-scripts/blob/main/setup-new-express-server.sh)
 
@@ -66,7 +74,13 @@
 17. Commit basic code
 18. Set up a hook that deploys any commits made to this repo 
 
-    
+## [rebuild-react-app.sh](https://github.com/leomancini/server-setup-scripts/blob/main/rebuild-react-app.sh)
+#### Rebuild a React app created by [setup-new-react-app.sh](https://github.com/leomancini/server-setup-scripts/blob/main/setup-new-react-app.sh)
+
+1. Install node modules
+2. Build app for production
+3. Reload Apache
+   
 ## [remove-react-app.sh](https://github.com/leomancini/server-setup-scripts/blob/main/remove-react-app.sh)
 #### Decommission a React app created by [setup-new-react-app.sh](https://github.com/leomancini/server-setup-scripts/blob/main/setup-new-react-app.sh)
 
