@@ -49,8 +49,8 @@
 1. Create root directory for app
 2. Create src directory for app
 3. Create public directory for app
-4. Create a basic files in src
-4. Create a basic files in public
+4. Creates basic files in src/
+4. Creates basic files in public/
 5. Create a basic README.md
 6. Create a basic package.json
 7. Create a setup-log.json
