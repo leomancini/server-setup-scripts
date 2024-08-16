@@ -361,8 +361,8 @@ else
 fi
 
 # Commit basic code
-if git add . && git commit -m "first commit" > /dev/null; then
-    echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Commited initial code to repository"
+if git add . && git commit -m "Adding basic template" > /dev/null; then
+    echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Committed initial code to repository"
 else
     echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot initial code to repository"
 fi
