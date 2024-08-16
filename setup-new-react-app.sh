@@ -202,6 +202,8 @@ fi
 # Create a basic README.md
 sudo touch $APPS_DIRECTORY/$APP_ID/README.md
 if echo "# $APP_NAME
+Identifier: $APP_ID
+Created: $(date)
 " | sudo tee $APPS_DIRECTORY/$APP_ID/README.md > /dev/null; then
     echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Created basic README.md file"
 else
@@ -349,6 +351,7 @@ fi
 # Create basic gitignore file
 sudo touch $APPS_DIRECTORY/$APP_ID/.gitignore
 if echo '.env
+.DS_Store
 node_modules/
 build/
 ' | sudo tee $APPS_DIRECTORY/$APP_ID/.gitignore > /dev/null; then
