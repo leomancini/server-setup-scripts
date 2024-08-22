@@ -202,9 +202,10 @@ fi
 # Create a basic README.md
 sudo touch $APPS_DIRECTORY/$APP_ID/README.md
 if echo "# $APP_NAME
+
 Identifier: $APP_ID
-Created: $(date)
-" | sudo tee $APPS_DIRECTORY/$APP_ID/README.md > /dev/null; then
+
+Created: $(date)" | sudo tee $APPS_DIRECTORY/$APP_ID/README.md > /dev/null; then
     echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Created basic README.md file"
 else
     echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot create basic README.md file"
