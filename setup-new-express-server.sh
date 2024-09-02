@@ -124,7 +124,7 @@ app.get('/', (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log('Server is running');
+  console.log(\`Server is running at http://localhost:\${port}\`);
 });
 " | sudo tee $SERVICES_DIRECTORY/$SERVICE_ID/server.js > /dev/null; then
 	echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Created basic server file"
