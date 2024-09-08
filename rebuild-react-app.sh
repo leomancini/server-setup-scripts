@@ -79,7 +79,7 @@ else
 fi
 
 # Install node modules
-if cd $APPS_DIRECTORY/$APP_ID && npm install; then
+if cd $APPS_DIRECTORY/$APP_ID && npm install --no-save; then
     echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Installed node modules"
 else
     echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot install node modules"
