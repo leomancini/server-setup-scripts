@@ -170,7 +170,7 @@ else
 fi
 
 # Install node modules
-if cd $SERVICES_DIRECTORY/$SERVICE_ID && npm install; then
+if cd $SERVICES_DIRECTORY/$SERVICE_ID && npm install --no-save; then
     echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Installed node modules"
 else
     echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot install node modules"
@@ -284,7 +284,7 @@ if echo "#!/bin/bash
 cd "$SERVICES_DIRECTORY/$SERVICE_ID" || { echo "Failed to change directory"; exit 1; }
 
 echo "Installing dependencies"
-npm install || { echo "npm install failed"; exit 1; }
+npm install --no-save || { echo "npm install failed"; exit 1; }
 
 echo "Stopping existing process"
 pkill -f "node.*$SERVICES_DIRECTORY/$SERVICE_ID" > /dev/null 2>&1 || true
