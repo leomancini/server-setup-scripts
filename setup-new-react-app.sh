@@ -280,7 +280,7 @@ else
 fi
 
 # Install node modules
-if cd $APPS_DIRECTORY/$APP_ID && npm install; then
+if cd $APPS_DIRECTORY/$APP_ID && npm install --no-save; then
     echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Installed node modules"
 else
     echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot install node modules"
@@ -378,7 +378,7 @@ if echo "#!/bin/bash
 cd "$APPS_DIRECTORY/$APP_ID" || { echo "Failed to change directory"; exit 1; }
 
 echo "Installing dependencies"
-npm install || { echo "npm install failed"; exit 1; }
+npm install --no-save || { echo "npm install failed"; exit 1; }
 
 echo "Building app for production"
 npm run build
