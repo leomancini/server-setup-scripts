@@ -85,6 +85,17 @@ else
     echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot install node modules"
 fi
 
+# Kill any stale process on the port before restarting
+PORT=$(jq -r '.port' "$SETUP_LOG_FILE")
+if [ -n "$PORT" ] && [ "$PORT" != "null" ]; then
+    STALE_PID=$(lsof -ti :$PORT -sTCP:LISTEN 2>/dev/null)
+    if [ -n "$STALE_PID" ]; then
+        echo "Killing stale process on port $PORT (PID $STALE_PID)"
+        kill -9 "$STALE_PID" 2>/dev/null
+        sleep 1
+    fi
+fi
+
 # Restart via PM2
 if pm2 restart "$SERVICE_ID" && pm2 save; then
     echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Restarted $SERVICE_ID via PM2"

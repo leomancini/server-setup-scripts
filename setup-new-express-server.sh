@@ -305,6 +305,13 @@ echo "Installing dependencies"
 npm install --no-save || { echo "npm install failed"; exit 1; }
 
 echo "Restarting via PM2"
+# Kill any stale process on the port before restarting
+STALE_PID=$(lsof -ti :'"$PORT"' -sTCP:LISTEN 2>/dev/null)
+if [ -n "$STALE_PID" ]; then
+  echo "Killing stale process on port '"$PORT"' (PID $STALE_PID)"
+  kill -9 "$STALE_PID" 2>/dev/null
+  sleep 1
+fi
 pm2 restart '"$SERVICE_ID"'
 pm2 save
 
