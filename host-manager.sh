@@ -6,6 +6,7 @@ SERVER="root.noshado.ws"
 SCRIPTS_DIRECTORY="/home/$USER/scripts"
 APPS_DIRECTORY="/home/$USER/react-apps"
 SERVICES_DIRECTORY="/home/$USER/services"
+FULL_STACK_APPS_DIRECTORY="/home/$USER/full-stack-apps"
 DOMAINS_DIRECTORY="/home/$USER/domains"
 
 # Cache tput values once to avoid forking on every redraw
@@ -207,6 +208,14 @@ display_remote_directory() {
                 echo "Restarting Express Server: $selected_folder"
                 execute_ssh_command "bash $SCRIPTS_DIRECTORY/restart-express-server.sh --service-id $selected_folder" "true"
                 ;;
+            "Remove Full Stack App")
+                echo "Removing Full Stack App: $selected_folder"
+                execute_ssh_command "bash $SCRIPTS_DIRECTORY/remove-full-stack-app.sh --app-id $selected_folder" "true"
+                ;;
+            "Restart Full Stack App")
+                echo "Restarting Full Stack App: $selected_folder"
+                execute_ssh_command "bash $SCRIPTS_DIRECTORY/restart-full-stack-app.sh --app-id $selected_folder" "true"
+                ;;
         esac
         return 0
     fi
@@ -298,7 +307,7 @@ while true; do
     elif [ $level1_selection -eq 0 ]; then
         while true; do
             # Level 2 (Set Up)
-            setup_options=("React App" "Express Server")
+            setup_options=("React App" "Express Server" "Full Stack App")
             navigate_menu 2 "Create New Instance" "add" "${setup_options[@]}"
             setup_selection=$selected_option
 
@@ -313,7 +322,7 @@ while true; do
                         execute_ssh_command "$SCRIPTS_DIRECTORY/setup-new-express-server.sh" "true"
                         ;;
                     2)
-                        execute_ssh_command "$SCRIPTS_DIRECTORY/setup-new-domain.sh" "true"
+                        execute_ssh_command "$SCRIPTS_DIRECTORY/setup-new-full-stack-app.sh" "true"
                         ;;
                 esac
             fi
@@ -321,7 +330,7 @@ while true; do
     elif [ $level1_selection -eq 1 ]; then
         while true; do
             # Level 2 (Remove)
-            remove_options=("React App" "Express Server")
+            remove_options=("React App" "Express Server" "Full Stack App")
             navigate_menu 2 "Remove Existing Instance" "remove" "${remove_options[@]}"
             remove_selection=$selected_option
 
@@ -341,13 +350,19 @@ while true; do
                             continue
                         fi
                         ;;
+                    2)
+                        # Level 3 (Remove Full Stack App)
+                        if ! display_remote_directory 3 "$FULL_STACK_APPS_DIRECTORY" "remove" "Remove Full Stack App"; then
+                            continue
+                        fi
+                        ;;
                 esac
             fi
         done
     elif [ $level1_selection -eq 2 ]; then
         while true; do
             # Level 2 (Reload)
-            reload_options=("React App" "Express Server")
+            reload_options=("React App" "Express Server" "Full Stack App")
             navigate_menu 2 "Reload Existing Instance" "reload" "${reload_options[@]}"
             reload_selection=$selected_option
 
@@ -367,13 +382,19 @@ while true; do
                             continue
                         fi
                         ;;
+                    2)
+                        # Level 3 (Restart Full Stack App)
+                        if ! display_remote_directory 3 "$FULL_STACK_APPS_DIRECTORY" "reload" "Restart Full Stack App"; then
+                            continue
+                        fi
+                        ;;
                 esac
             fi
         done
     elif [ $level1_selection -eq 3 ]; then
         while true; do
             # Level 2 (View Git Remotes)
-            view_options=("React App" "Express Server")
+            view_options=("React App" "Express Server" "Full Stack App")
             navigate_menu 2 "View Git Remotes" "view" "${view_options[@]}"
             view_selection=$selected_option
 
@@ -390,6 +411,12 @@ while true; do
                     1)
                         # Level 3 (View Express Server Git Remotes)
                         if ! display_git_remotes 3 "$SERVICES_DIRECTORY" "" "Express Server Git Remotes"; then
+                            continue
+                        fi
+                        ;;
+                    2)
+                        # Level 3 (View Full Stack App Git Remotes)
+                        if ! display_git_remotes 3 "$FULL_STACK_APPS_DIRECTORY" "" "Full Stack App Git Remotes"; then
                             continue
                         fi
                         ;;
