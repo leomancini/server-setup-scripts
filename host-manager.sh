@@ -314,15 +314,26 @@ while true; do
             if [ $setup_selection -eq ${#setup_options[@]} ]; then
                 break
             else
+                # Prompt for Anthropic API access for Express Server and Full Stack App
+                ANTHROPIC_FLAGS=""
+                if [ $setup_selection -eq 1 ] || [ $setup_selection -eq 2 ]; then
+                    read -p "Enable Anthropic API access? (y/n): " ENABLE_ANTHROPIC
+                    if [[ "$ENABLE_ANTHROPIC" =~ ^[Yy] ]]; then
+                        read -s -p "Enter Anthropic API key: " ANTHROPIC_KEY
+                        echo
+                        ANTHROPIC_FLAGS="--anthropic --anthropic-key $ANTHROPIC_KEY"
+                    fi
+                fi
+
                 case $setup_selection in
                     0)
                         execute_ssh_command "$SCRIPTS_DIRECTORY/setup-new-react-app.sh" "true"
                         ;;
                     1)
-                        execute_ssh_command "$SCRIPTS_DIRECTORY/setup-new-express-server.sh" "true"
+                        execute_ssh_command "$SCRIPTS_DIRECTORY/setup-new-express-server.sh $ANTHROPIC_FLAGS" "true"
                         ;;
                     2)
-                        execute_ssh_command "$SCRIPTS_DIRECTORY/setup-new-full-stack-app.sh" "true"
+                        execute_ssh_command "$SCRIPTS_DIRECTORY/setup-new-full-stack-app.sh $ANTHROPIC_FLAGS" "true"
                         ;;
                 esac
             fi

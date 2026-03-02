@@ -23,12 +23,14 @@ generate_service_id() {
 }
 
 # Parse CLI arguments
-CLI_NAME="" CLI_ID="" CLI_DOMAIN=""
+CLI_NAME="" CLI_ID="" CLI_DOMAIN="" CLI_ANTHROPIC="" CLI_ANTHROPIC_KEY=""
 while [[ $# -gt 0 ]]; do
   case $1 in
     --name) CLI_NAME="$2"; shift 2 ;;
     --id) CLI_ID="$2"; shift 2 ;;
     --domain) CLI_DOMAIN="$2"; shift 2 ;;
+    --anthropic) CLI_ANTHROPIC="true"; shift ;;
+    --anthropic-key) CLI_ANTHROPIC="true"; CLI_ANTHROPIC_KEY="$2"; shift 2 ;;
     *) echo "Unknown option: $1"; exit 1 ;;
   esac
 done
@@ -63,6 +65,35 @@ else
   else
     read -p "URL (Default: "${DEFAULT_DOMAIN_NAME}"): " DOMAIN_NAME
     DOMAIN_NAME=${DOMAIN_NAME:-$DEFAULT_DOMAIN_NAME}
+  fi
+fi
+
+# Anthropic API: use CLI flag or prompt
+if [ -n "$CLI_ANTHROPIC" ]; then
+  ENABLE_ANTHROPIC="true"
+else
+  if [ -n "$CLI_NAME" ] || [ -n "$CLI_ID" ]; then
+    ENABLE_ANTHROPIC="false"
+  else
+    read -p "Enable Anthropic API access? (y/n): " ANTHROPIC_ANSWER
+    if [[ "$ANTHROPIC_ANSWER" =~ ^[Yy] ]]; then
+      ENABLE_ANTHROPIC="true"
+    else
+      ENABLE_ANTHROPIC="false"
+    fi
+  fi
+fi
+
+# Anthropic API key: use CLI arg > env var > interactive prompt
+ANTHROPIC_KEY=""
+if [ "$ENABLE_ANTHROPIC" = "true" ]; then
+  if [ -n "$CLI_ANTHROPIC_KEY" ]; then
+    ANTHROPIC_KEY="$CLI_ANTHROPIC_KEY"
+  elif [ -n "${ANTHROPIC_API_KEY:-}" ]; then
+    ANTHROPIC_KEY="$ANTHROPIC_API_KEY"
+  else
+    read -s -p "Enter Anthropic API key: " ANTHROPIC_KEY
+    echo
   fi
 fi
 
@@ -144,6 +175,7 @@ if echo "{
   \"host\": \"localhost\",
   \"port\": \"$PORT\",
   \"author\": \"$USER\",
+  \"anthropic\": $ENABLE_ANTHROPIC,
   \"created_on\": \"$(date)\"
 }" | sudo tee "$SERVICES_DIRECTORY/$SERVICE_ID/setup-log.json" > /dev/null; then
     echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Created setup-log.json file"
@@ -153,11 +185,21 @@ fi
 
 # Create a basic server
 sudo touch $SERVICES_DIRECTORY/$SERVICE_ID/server.js
-if echo "import express from 'express';
+SERVER_JS_IMPORTS="import express from 'express';"
+SERVER_JS_INIT=""
+if [ "$ENABLE_ANTHROPIC" = "true" ]; then
+  SERVER_JS_IMPORTS="import 'dotenv/config';
+import Anthropic from '@anthropic-ai/sdk';
+import express from 'express';"
+  SERVER_JS_INIT="
+const anthropic = new Anthropic();
+"
+fi
+if echo "$SERVER_JS_IMPORTS
 
 const app = express();
 const port = $PORT;
-
+$SERVER_JS_INIT
 app.get('/', (req, res) => {
   res.send('Hello world!');
 });
@@ -169,6 +211,16 @@ app.listen(port, () => {
 	echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Created basic server file"
 else
 	echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot create basic server file"
+fi
+
+# Create .env file if Anthropic is enabled
+if [ "$ENABLE_ANTHROPIC" = "true" ]; then
+    sudo touch $SERVICES_DIRECTORY/$SERVICE_ID/.env
+    if echo "ANTHROPIC_API_KEY=$ANTHROPIC_KEY" | sudo tee $SERVICES_DIRECTORY/$SERVICE_ID/.env > /dev/null; then
+        echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Created .env file with Anthropic API key"
+    else
+        echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot create .env file"
+    fi
 fi
 
 # Create a basic README.md
@@ -184,6 +236,12 @@ else
 fi
 
 # Create basic package.json file
+ANTHROPIC_DEPS=""
+if [ "$ENABLE_ANTHROPIC" = "true" ]; then
+  ANTHROPIC_DEPS='
+    "@anthropic-ai/sdk": "^0.39.0",
+    "dotenv": "^16.4.7",'
+fi
 sudo touch $SERVICES_DIRECTORY/$SERVICE_ID/package.json
 if echo '{
   "name": "'"$SERVICE_ID"'",
@@ -197,7 +255,7 @@ if echo '{
   },
   "author": "",
   "license": "ISC",
-  "dependencies": {
+  "dependencies": {'"$ANTHROPIC_DEPS"'
     "express": "^4.19.2",
     "path": "^0.12.7",
     "url": "^0.11.3"
