@@ -331,8 +331,8 @@ else
     echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot build app for production"
 fi
 
-# Append app to ecosystem.config.cjs
-ECOSYSTEM_FILE="/home/$USER/ecosystem.config.cjs"
+# Append app to ecosystem.config.js
+ECOSYSTEM_FILE="/home/$USER/ecosystem.config.js"
 if node -e "
 const fs = require('fs');
 const config = require('$ECOSYSTEM_FILE');
@@ -350,9 +350,9 @@ const lines = config.apps.map(app => {
 });
 fs.writeFileSync('$ECOSYSTEM_FILE', 'module.exports = {\n  apps: [\n' + lines.join(',\n') + ',\n  ],\n};\n');
 "; then
-    echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Added $APP_ID to ecosystem.config.cjs"
+    echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Added $APP_ID to ecosystem.config.js"
 else
-    echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot add $APP_ID to ecosystem.config.cjs"
+    echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot add $APP_ID to ecosystem.config.js"
 fi
 
 # Start node process via PM2

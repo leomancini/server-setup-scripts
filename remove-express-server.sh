@@ -105,8 +105,8 @@ else
     echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot remove $SERVICE_ID from PM2"
 fi
 
-# Remove service from ecosystem.config.cjs
-ECOSYSTEM_FILE="/home/$USER/ecosystem.config.cjs"
+# Remove service from ecosystem.config.js
+ECOSYSTEM_FILE="/home/$USER/ecosystem.config.js"
 if node -e "
 const fs = require('fs');
 const config = require('$ECOSYSTEM_FILE');
@@ -117,9 +117,9 @@ const lines = config.apps.map(app => {
 });
 fs.writeFileSync('$ECOSYSTEM_FILE', 'module.exports = {\n  apps: [\n' + lines.join(',\n') + ',\n  ],\n};\n');
 "; then
-    echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Removed $SERVICE_ID from ecosystem.config.cjs"
+    echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Removed $SERVICE_ID from ecosystem.config.js"
 else
-    echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot remove $SERVICE_ID from ecosystem.config.cjs"
+    echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot remove $SERVICE_ID from ecosystem.config.js"
 fi
 
 # Save PM2 process list
