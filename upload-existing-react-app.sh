@@ -82,9 +82,9 @@ if echo "<VirtualHost *:80>
     ServerAlias www.$DOMAIN_NAME
     ServerAdmin $ADMIN_CONTACT
 
-    DocumentRoot $APPS_DIRECTORY/$APP_ID/build
-    
-    <Directory $APPS_DIRECTORY/$APP_ID/build>
+    DocumentRoot $APPS_DIRECTORY/$APP_ID/dist
+
+    <Directory $APPS_DIRECTORY/$APP_ID/dist>
         AllowOverride all
         Require all granted
     </Directory>

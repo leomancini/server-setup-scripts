@@ -84,15 +84,8 @@ else
     echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot create src directory at $APPS_DIRECTORY/$APP_ID/src"
 fi
 
-# Create public directory for app
-if sudo mkdir $APPS_DIRECTORY/$APP_ID/public; then
-    echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Created public directory at $APPS_DIRECTORY/$APP_ID/public"
-else
-    echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot create public directory at $APPS_DIRECTORY/$APP_ID/public"
-fi
-
-# Create a basic src/App.js file
-sudo touch $APPS_DIRECTORY/$APP_ID/src/App.js
+# Create a basic src/App.jsx file
+sudo touch $APPS_DIRECTORY/$APP_ID/src/App.jsx
 if echo "import React from \"react\";
 import styled from \"styled-components\";
 
@@ -110,10 +103,10 @@ function App() {
 }
 
 export default App;
-" | sudo tee $APPS_DIRECTORY/$APP_ID/src/App.js > /dev/null; then
-    echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Created basic src/App.js file"
+" | sudo tee $APPS_DIRECTORY/$APP_ID/src/App.jsx > /dev/null; then
+    echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Created basic src/App.jsx file"
 else
-    echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot create basic src/App.js file"
+    echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot create basic src/App.jsx file"
 fi
 
 # Create a basic src/index.css
@@ -137,8 +130,8 @@ else
     echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot create basic src/index.css file"
 fi
 
-# Create a basic src/index.js
-sudo touch $APPS_DIRECTORY/$APP_ID/src/index.js
+# Create a basic src/main.jsx
+sudo touch $APPS_DIRECTORY/$APP_ID/src/main.jsx
 if echo "import React from \"react\";
 import ReactDOM from \"react-dom/client\";
 import \"./index.css\";
@@ -146,57 +139,44 @@ import App from \"./App\";
 
 const root = ReactDOM.createRoot(document.getElementById(\"root\"));
 root.render(<App />);
-" | sudo tee $APPS_DIRECTORY/$APP_ID/src/index.js > /dev/null; then
-    echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Created basic src/index.js file"
+" | sudo tee $APPS_DIRECTORY/$APP_ID/src/main.jsx > /dev/null; then
+    echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Created basic src/main.jsx file"
 else
-    echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot create basic src/index.js file"
+    echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot create basic src/main.jsx file"
 fi
 
-# Create a basic public/index.html
-sudo touch $APPS_DIRECTORY/$APP_ID/public/index.html
+# Create a basic index.html
+sudo touch $APPS_DIRECTORY/$APP_ID/index.html
 if echo "<!DOCTYPE html>
-<html lang="en">
+<html lang=\"en\">
   <head>
     <meta charset=\"utf-8\" />
     <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />
     <title>$APP_NAME</title>
   </head>
   <body>
-    <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id=\"root\"></div>
+    <script type=\"module\" src=\"/src/main.jsx\"></script>
   </body>
 </html>
-" | sudo tee $APPS_DIRECTORY/$APP_ID/public/index.html > /dev/null; then
-    echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Created basic public/index.html file"
+" | sudo tee $APPS_DIRECTORY/$APP_ID/index.html > /dev/null; then
+    echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Created basic index.html file"
 else
-    echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot create basic public/index.html file"
+    echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot create basic index.html file"
 fi
 
-# Create a basic public/manifest.json
-sudo touch $APPS_DIRECTORY/$APP_ID/public/manifest.json
-if echo "{
-  \"short_name\": \"$APP_NAME\",
-  \"name\": \"$APP_NAME\",
-  \"start_url\": \".\",
-  \"display\": \"standalone\",
-  \"theme_color\": \"#000000\",
-  \"background_color\": \"#ffffff\"
-}
-" | sudo tee $APPS_DIRECTORY/$APP_ID/public/manifest.json > /dev/null; then
-    echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Created basic public/manifest.json file"
-else
-    echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot create basic public/manifest.json file"
-fi
+# Create vite.config.js
+sudo touch $APPS_DIRECTORY/$APP_ID/vite.config.js
+if echo "import { defineConfig } from \"vite\";
+import react from \"@vitejs/plugin-react\";
 
-# Create a basic public/robots.txt
-sudo touch $APPS_DIRECTORY/$APP_ID/public/manifest.json
-if echo "# https://www.robotstxt.org/robotstxt.html
-User-agent: *
-Disallow:
-" | sudo tee $APPS_DIRECTORY/$APP_ID/public/robots.txt > /dev/null; then
-    echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Created basic public/robots.txt file"
+export default defineConfig({
+  plugins: [react()],
+});
+" | sudo tee $APPS_DIRECTORY/$APP_ID/vite.config.js > /dev/null; then
+    echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Created vite.config.js file"
 else
-    echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot create basic public/robots.txt file"
+    echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot create vite.config.js file"
 fi
 
 # Create a basic README.md
@@ -215,39 +195,22 @@ fi
 sudo touch $APPS_DIRECTORY/$APP_ID/package.json
 if echo "{
   \"name\": \"$APP_ID\",
-  \"homepage\": \"./\",
   \"version\": \"0.1.0\",
-  \"private\": false,
+  \"private\": true,
+  \"type\": \"module\",
+  \"scripts\": {
+    \"dev\": \"vite\",
+    \"build\": \"vite build\",
+    \"preview\": \"vite preview\"
+  },
   \"dependencies\": {
     \"react\": \"^18.3.1\",
     \"react-dom\": \"^18.3.1\",
-    \"react-scripts\": \"5.0.1\",
     \"styled-components\": \"^6.1.11\"
   },
-  \"scripts\": {
-    \"dev\": \"react-scripts start\",
-    \"start\": \"react-scripts start\",
-    \"build\": \"react-scripts build\",
-    \"test\": \"react-scripts test\",
-    \"eject\": \"react-scripts eject\"
-  },
-  \"eslintConfig\": {
-    \"extends\": [
-      \"react-app\",
-      \"react-app/jest\"
-    ]
-  },
-  \"browserslist\": {
-    \"production\": [
-      \">0.2%\",
-      \"not dead\",
-      \"not op_mini all\"
-    ],
-    \"development\": [
-      \"last 1 chrome version\",
-      \"last 1 firefox version\",
-      \"last 1 safari version\"
-    ]
+  \"devDependencies\": {
+    \"@vitejs/plugin-react\": \"^4.3.4\",
+    \"vite\": \"^6.0.0\"
   }
 }
 " | sudo tee $APPS_DIRECTORY/$APP_ID/package.json > /dev/null; then
@@ -291,24 +254,24 @@ else
     echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot build app for production"
 fi
 
-# Create a VirtualHost config file that points to the app's build directory
+# Create a VirtualHost config file that points to the app's dist directory
 sudo touch /etc/apache2/sites-available/$DOMAIN_NAME.conf
 if echo "<VirtualHost *:80>
-    
+
     ServerName $DOMAIN_NAME
     ServerAlias www.$DOMAIN_NAME
     ServerAdmin $ADMIN_CONTACT
 
-    DocumentRoot $APPS_DIRECTORY/$APP_ID/build
-    
-    <Directory $APPS_DIRECTORY/$APP_ID/build>
+    DocumentRoot $APPS_DIRECTORY/$APP_ID/dist
+
+    <Directory $APPS_DIRECTORY/$APP_ID/dist>
         AllowOverride all
         Require all granted
     </Directory>
 
     ErrorLog /var/log/apache2/$DOMAIN_NAME-error.log
     CustomLog /var/log/apache2/$DOMAIN_NAME-access.log combined
-    
+
 </VirtualHost>" | sudo tee /etc/apache2/sites-available/$DOMAIN_NAME.conf > /dev/null; then
     echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Created Apache config file at /etc/apache2/sites-available/$DOMAIN_NAME.conf"
 else
@@ -352,7 +315,7 @@ sudo touch $APPS_DIRECTORY/$APP_ID/.gitignore
 if echo '.env
 .DS_Store
 node_modules/
-build/
+dist/
 ' | sudo tee $APPS_DIRECTORY/$APP_ID/.gitignore > /dev/null; then
     echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Created basic gitignore file"
 else
@@ -366,7 +329,7 @@ else
     echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot initial code to repository"
 fi
 
-# Set up a hook that deploys any commits made to this repo 
+# Set up a hook that deploys any commits made to this repo
 sudo touch $APPS_DIRECTORY/$APP_ID/.git/hooks/post-receive
 sudo chmod +x $APPS_DIRECTORY/$APP_ID/.git/hooks/post-receive
 sudo chown $USER $APPS_DIRECTORY/$APP_ID/.git/hooks/post-receive
