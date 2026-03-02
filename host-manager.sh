@@ -151,7 +151,7 @@ execute_ssh_command() {
       echo " "
       read -p "${BOLD}DONE${RESET} Press enter to continue"
     else
-      ssh -t $USER@$SERVER "$command"
+      ssh $USER@$SERVER "$command"
     fi
 }
 
