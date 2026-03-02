@@ -13,6 +13,10 @@ BOLD_RED='\e[1;31m'
 BOLD_GREEN='\e[1;32m'
 END_COLOR='\e[0m' # This ends formatting
 
+# Load nvm so node/npm/pm2 are available in non-interactive shells
+export NVM_DIR="/home/$USER/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
 # Function to convert app name to hyphenated app ID
 generate_app_id() {
   echo "$1" | tr '[:upper:]' '[:lower:]' | tr ' ' '-'
@@ -475,6 +479,10 @@ sudo chmod +x $APPS_DIRECTORY/$APP_ID/.git/hooks/post-receive
 sudo chown $USER $APPS_DIRECTORY/$APP_ID/.git/hooks/post-receive
 
 if echo '#!/bin/bash
+
+# Load nvm so node/npm/pm2 are available in non-interactive shells
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
 cd '"$APPS_DIRECTORY/$APP_ID"' || { echo "Failed to change directory"; exit 1; }
 

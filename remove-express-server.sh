@@ -10,6 +10,10 @@ BOLD_RED='\e[1;31m'
 BOLD_GREEN='\e[1;32m'
 END_COLOR='\e[0m' # This ends formatting
 
+# Load nvm so node/npm/pm2 are available in non-interactive shells
+export NVM_DIR="/home/$USER/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
 # Parse CLI arguments
 while [[ "$#" -gt 0 ]]; do
     case $1 in
