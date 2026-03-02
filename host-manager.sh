@@ -8,6 +8,18 @@ APPS_DIRECTORY="/home/$USER/react-apps"
 SERVICES_DIRECTORY="/home/$USER/services"
 DOMAINS_DIRECTORY="/home/$USER/domains"
 
+# Escape sequences
+ESC_HOME="\033[H"        # Move cursor to top-left
+ESC_CLEAR_LINE="\033[K"  # Clear from cursor to end of line
+ESC_CLEAR_REST="\033[J"  # Clear from cursor to end of screen
+ESC_HIDE_CURSOR="\033[?25l"
+ESC_SHOW_CURSOR="\033[?25h"
+
+# Emit a line that overwrites the current row and clears any leftover characters
+put_line() {
+    echo -e "$1${ESC_CLEAR_LINE}"
+}
+
 # Function to print the menu with minimal updates
 print_menu() {
     local level=$1
@@ -16,12 +28,12 @@ print_menu() {
     local mode=$4
     shift 4
     local options=("$@")
-    
-    echo -e "\033[H\033[J" # Clear the screen
-    
-    echo "$(tput bold)$(tput smso)  $header  $(tput sgr0)"
-    echo " "
-    
+
+    echo -ne "${ESC_HIDE_CURSOR}${ESC_HOME}" # Hide cursor and move to top-left
+
+    put_line "$(tput bold)$(tput smso)  $header  $(tput sgr0)"
+    put_line " "
+
     # Determine color based on mode
     if [ "$mode" == "add" ]; then
         selected_symbol="+"
@@ -39,46 +51,47 @@ print_menu() {
         selected_symbol="→"
         option_color=$(tput sgr0) # Default color
     fi
-    
+
     if [ $level -gt 1 ]; then
         for ((i = 0; i < ${#options[@]}; i++)); do
             if [ $i -eq $selected ]; then
-                echo -e "$option_color$(tput bold)$selected_symbol ${options[i]}$(tput sgr0)"
+                put_line "$option_color$(tput bold)$selected_symbol ${options[i]}$(tput sgr0)"
             else
-                echo -e "$(tput sgr0)  ${options[i]}$(tput sgr0)"
+                put_line "$(tput sgr0)  ${options[i]}$(tput sgr0)"
             fi
         done
-        echo " "
+        put_line " "
         if [ $selected -eq ${#options[@]} ]; then
-            echo -e "$(tput setaf 5)$(tput bold)← Back$(tput sgr0)"
+            put_line "$(tput setaf 5)$(tput bold)← Back$(tput sgr0)"
         else
-            echo "  Back"
+            put_line "  Back"
         fi
     else
         for ((i = 0; i < ${#options[@]}; i++)); do
             if [ "${options[i]}" == "" ]; then
-                echo " " # Print a blank line for the unselectable blank option
+                put_line " " # Print a blank line for the unselectable blank option
             elif [ $i -eq $selected ]; then
                 if [ "${options[i]}" == "Create New Instance" ]; then
-                    echo -e "$(tput setaf 2)$(tput bold)+ ${options[i]}$(tput sgr0)"
+                    put_line "$(tput setaf 2)$(tput bold)+ ${options[i]}$(tput sgr0)"
                 elif [ "${options[i]}" == "Remove Existing Instance" ]; then
-                    echo -e "$(tput setaf 1)$(tput bold)- ${options[i]}$(tput sgr0)"
+                    put_line "$(tput setaf 1)$(tput bold)- ${options[i]}$(tput sgr0)"
                 elif [ "${options[i]}" == "Reload Existing Instance" ]; then
-                    echo -e "$(tput setaf 6)$(tput bold)↻ ${options[i]}$(tput sgr0)"
+                    put_line "$(tput setaf 6)$(tput bold)↻ ${options[i]}$(tput sgr0)"
                 elif [ "${options[i]}" == "View Git Remotes" ]; then
-                    echo -e "$(tput setaf 4)$(tput bold)→ ${options[i]}$(tput sgr0)"
+                    put_line "$(tput setaf 4)$(tput bold)→ ${options[i]}$(tput sgr0)"
                 elif [ "${options[i]}" == "Exit" ]; then
-                    echo -e "$(tput setaf 5)$(tput bold)✕ ${options[i]}$(tput sgr0)"
+                    put_line "$(tput setaf 5)$(tput bold)✕ ${options[i]}$(tput sgr0)"
                 else
-                    echo -e "$(tput setaf 5)$(tput bold)→ ${options[i]}$(tput sgr0)"
+                    put_line "$(tput setaf 5)$(tput bold)→ ${options[i]}$(tput sgr0)"
                 fi
             else
-                echo -e "$(tput sgr0)  ${options[i]}$(tput sgr0)"
+                put_line "$(tput sgr0)  ${options[i]}$(tput sgr0)"
             fi
         done
     fi
-      
-    echo " "
+
+    put_line " "
+    echo -ne "${ESC_CLEAR_REST}${ESC_SHOW_CURSOR}" # Clear leftover lines and show cursor
 }
 
 # Function to handle the arrow key inputs and back option
@@ -247,22 +260,23 @@ display_git_remotes() {
     # Display the git remotes with navigation
     local selected=0
     while true; do
-        echo -e "\033[H\033[J" # Clear the screen
-        echo "$(tput bold)$(tput smso)  $action  $(tput sgr0)"
-        echo " "
-        
+        echo -ne "${ESC_HIDE_CURSOR}${ESC_HOME}"
+        put_line "$(tput bold)$(tput smso)  $action  $(tput sgr0)"
+        put_line " "
+
         # Display all git remotes (non-selectable)
         for display_option in "${display_options[@]}"; do
-            echo -e "  $display_option"
+            put_line "  $display_option"
         done
-        
-        echo " "
+
+        put_line " "
         if [ $selected -eq 0 ]; then
-            echo -e "$(tput setaf 5)$(tput bold)← Back$(tput sgr0)"
+            put_line "$(tput setaf 5)$(tput bold)← Back$(tput sgr0)"
         else
-            echo "  Back"
+            put_line "  Back"
         fi
-        echo " "
+        put_line " "
+        echo -ne "${ESC_CLEAR_REST}${ESC_SHOW_CURSOR}"
 
         read -rsn1 input
         if [[ $input == $'\x1b' ]]; then
