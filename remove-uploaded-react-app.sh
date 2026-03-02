@@ -12,6 +12,10 @@ BOLD_RED='\e[1;31m'
 BOLD_GREEN='\e[1;32m'
 END_COLOR='\e[0m' # This ends formatting
 
+# Load nvm so node/npm/pm2 are available in non-interactive shells
+export NVM_DIR="/home/$USER/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
 # Parse CLI arguments
 while [[ "$#" -gt 0 ]]; do
     case $1 in
@@ -64,9 +68,13 @@ echo "Domain Name: $DOMAIN_NAME"
 
 echo " "
 
-# Prompt for sudo password
-read -s -p "Enter sudo password: " SUDO_PASSWORD
-echo
+# Sudo password: use DREAMCOMPUTE_LEO_PASSWORD env var or prompt
+if [ -n "${DREAMCOMPUTE_LEO_PASSWORD:-}" ]; then
+  SUDO_PASSWORD="$DREAMCOMPUTE_LEO_PASSWORD"
+else
+  read -s -p "Enter sudo password: " SUDO_PASSWORD
+  echo
+fi
 
 # Function to keep sudo session alive
 keep_sudo_alive() {

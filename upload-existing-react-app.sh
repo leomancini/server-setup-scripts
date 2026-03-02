@@ -14,13 +14,39 @@ BOLD_RED='\e[1;31m'
 BOLD_GREEN='\e[1;32m'
 END_COLOR='\e[0m' # This ends formatting
 
-# Prompt for the app ID
-read -p "App ID: " APP_ID
+# Load nvm so node/npm/pm2 are available in non-interactive shells
+export NVM_DIR="/home/$USER/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
-# Prompt for the domain name with the default value
-DEFAULT_DOMAIN_NAME="$APP_ID.$DEFAULT_DOMAIN_FOR_SUBDOMAINS"
-read -p "URL (Default: "${DEFAULT_DOMAIN_NAME}"): " DOMAIN_NAME
-DOMAIN_NAME=${DOMAIN_NAME:-$DEFAULT_DOMAIN_NAME}
+# Parse CLI arguments
+CLI_ID="" CLI_DOMAIN=""
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --app-id) CLI_ID="$2"; shift 2 ;;
+    --domain) CLI_DOMAIN="$2"; shift 2 ;;
+    *) echo "Unknown option: $1"; exit 1 ;;
+  esac
+done
+
+# App ID: use CLI arg or prompt
+if [ -n "$CLI_ID" ]; then
+  APP_ID="$CLI_ID"
+else
+  read -p "App ID: " APP_ID
+fi
+
+# Domain: use CLI arg, auto-derive if app-id was given via CLI, or prompt
+if [ -n "$CLI_DOMAIN" ]; then
+  DOMAIN_NAME="$CLI_DOMAIN"
+else
+  DEFAULT_DOMAIN_NAME="$APP_ID.$DEFAULT_DOMAIN_FOR_SUBDOMAINS"
+  if [ -n "$CLI_ID" ]; then
+    DOMAIN_NAME="$DEFAULT_DOMAIN_NAME"
+  else
+    read -p "URL (Default: "${DEFAULT_DOMAIN_NAME}"): " DOMAIN_NAME
+    DOMAIN_NAME=${DOMAIN_NAME:-$DEFAULT_DOMAIN_NAME}
+  fi
+fi
 
 echo " "
 
@@ -30,9 +56,13 @@ echo "URL: https://$DOMAIN_NAME"
 
 echo " "
 
-# Prompt for sudo password
-read -s -p "Enter sudo password: " SUDO_PASSWORD
-echo
+# Sudo password: use DREAMCOMPUTE_LEO_PASSWORD env var or prompt
+if [ -n "${DREAMCOMPUTE_LEO_PASSWORD:-}" ]; then
+  SUDO_PASSWORD="$DREAMCOMPUTE_LEO_PASSWORD"
+else
+  read -s -p "Enter sudo password: " SUDO_PASSWORD
+  echo
+fi
 
 # Function to keep sudo session alive
 keep_sudo_alive() {
@@ -137,6 +167,10 @@ WORK_TREE="$APPS_DIRECTORY/$APP_ID"
 GIT_DIR="$REPOS_DIRECTORY/$APP_ID.git"
 
 if echo "#!/bin/bash
+
+# Load nvm so node/npm/pm2 are available in non-interactive shells
+export NVM_DIR=\"\$HOME/.nvm\"
+[ -s \"\$NVM_DIR/nvm.sh\" ] && \\. \"\$NVM_DIR/nvm.sh\"
 
 cd "$APPS_DIRECTORY/$APP_ID" || { echo "Failed to change directory"; exit 1; }
 
