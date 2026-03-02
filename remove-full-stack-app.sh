@@ -36,9 +36,13 @@ clean_app_id() {
 # Clean APP_ID
 APP_ID=$(clean_app_id "$APP_ID")
 
-# Prompt for sudo password
-read -s -p "Enter sudo password: " SUDO_PASSWORD
-echo
+# Sudo password: use DREAMCOMPUTE_LEO_PASSWORD env var or prompt
+if [ -n "${DREAMCOMPUTE_LEO_PASSWORD:-}" ]; then
+  SUDO_PASSWORD="$DREAMCOMPUTE_LEO_PASSWORD"
+else
+  read -s -p "Enter sudo password: " SUDO_PASSWORD
+  echo
+fi
 
 # Function to keep sudo session alive
 keep_sudo_alive() {
