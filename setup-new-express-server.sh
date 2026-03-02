@@ -18,18 +18,49 @@ generate_service_id() {
   echo "$1" | tr '[:upper:]' '[:lower:]' | tr ' ' '-'
 }
 
-# Prompt for the service name and generate the default app ID
-read -p "Service Name (Title Case): " SERVICE_NAME
-DEFAULT_SERVICE_ID=$(generate_service_id "$SERVICE_NAME")
+# Parse CLI arguments
+CLI_NAME="" CLI_ID="" CLI_DOMAIN=""
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --name) CLI_NAME="$2"; shift 2 ;;
+    --id) CLI_ID="$2"; shift 2 ;;
+    --domain) CLI_DOMAIN="$2"; shift 2 ;;
+    *) echo "Unknown option: $1"; exit 1 ;;
+  esac
+done
 
-# Prompt for the service ID with the default value
-read -p "Service ID (Default: "${DEFAULT_SERVICE_ID}"): " SERVICE_ID
-SERVICE_ID=${SERVICE_ID:-$DEFAULT_SERVICE_ID}
+# Service Name: use CLI arg or prompt
+if [ -n "$CLI_NAME" ]; then
+  SERVICE_NAME="$CLI_NAME"
+else
+  read -p "Service Name (Title Case): " SERVICE_NAME
+fi
 
-# Prompt for the domain name with the default value
-DEFAULT_DOMAIN_NAME="$SERVICE_ID.$DEFAULT_DOMAIN_FOR_SUBDOMAINS"
-read -p "URL (Default: "${DEFAULT_DOMAIN_NAME}"): " DOMAIN_NAME
-DOMAIN_NAME=${DOMAIN_NAME:-$DEFAULT_DOMAIN_NAME}
+# Service ID: use CLI arg, auto-derive if name was given via CLI, or prompt
+if [ -n "$CLI_ID" ]; then
+  SERVICE_ID="$CLI_ID"
+else
+  DEFAULT_SERVICE_ID=$(generate_service_id "$SERVICE_NAME")
+  if [ -n "$CLI_NAME" ]; then
+    SERVICE_ID="$DEFAULT_SERVICE_ID"
+  else
+    read -p "Service ID (Default: "${DEFAULT_SERVICE_ID}"): " SERVICE_ID
+    SERVICE_ID=${SERVICE_ID:-$DEFAULT_SERVICE_ID}
+  fi
+fi
+
+# Domain: use CLI arg, auto-derive if any CLI args were given, or prompt
+if [ -n "$CLI_DOMAIN" ]; then
+  DOMAIN_NAME="$CLI_DOMAIN"
+else
+  DEFAULT_DOMAIN_NAME="$SERVICE_ID.$DEFAULT_DOMAIN_FOR_SUBDOMAINS"
+  if [ -n "$CLI_NAME" ] || [ -n "$CLI_ID" ]; then
+    DOMAIN_NAME="$DEFAULT_DOMAIN_NAME"
+  else
+    read -p "URL (Default: "${DEFAULT_DOMAIN_NAME}"): " DOMAIN_NAME
+    DOMAIN_NAME=${DOMAIN_NAME:-$DEFAULT_DOMAIN_NAME}
+  fi
+fi
 
 echo " "
 
@@ -52,9 +83,13 @@ echo "Host: localhost:$PORT"
 
 echo " "
 
-# Prompt for sudo password
-read -s -p "Enter sudo password: " SUDO_PASSWORD
-echo
+# Sudo password: use DREAMCOMPUTE_LEO_PASSWORD env var or prompt
+if [ -n "${DREAMCOMPUTE_LEO_PASSWORD:-}" ]; then
+  SUDO_PASSWORD="$DREAMCOMPUTE_LEO_PASSWORD"
+else
+  read -s -p "Enter sudo password: " SUDO_PASSWORD
+  echo
+fi
 
 # Function to keep sudo session alive
 keep_sudo_alive() {

@@ -18,18 +18,49 @@ generate_app_id() {
   echo "$1" | tr '[:upper:]' '[:lower:]' | tr ' ' '-'
 }
 
-# Prompt for the app name and generate the default app ID
-read -p "App Name (Title Case): " APP_NAME
-DEFAULT_APP_ID=$(generate_app_id "$APP_NAME")
+# Parse CLI arguments
+CLI_NAME="" CLI_ID="" CLI_DOMAIN=""
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --name) CLI_NAME="$2"; shift 2 ;;
+    --id) CLI_ID="$2"; shift 2 ;;
+    --domain) CLI_DOMAIN="$2"; shift 2 ;;
+    *) echo "Unknown option: $1"; exit 1 ;;
+  esac
+done
 
-# Prompt for the app ID with the default value
-read -p "App ID (Default: "${DEFAULT_APP_ID}"): " APP_ID
-APP_ID=${APP_ID:-$DEFAULT_APP_ID}
+# App Name: use CLI arg or prompt
+if [ -n "$CLI_NAME" ]; then
+  APP_NAME="$CLI_NAME"
+else
+  read -p "App Name (Title Case): " APP_NAME
+fi
 
-# Prompt for the domain name with the default value
-DEFAULT_DOMAIN_NAME="$APP_ID.$DEFAULT_DOMAIN_FOR_SUBDOMAINS"
-read -p "URL (Default: "${DEFAULT_DOMAIN_NAME}"): " DOMAIN_NAME
-DOMAIN_NAME=${DOMAIN_NAME:-$DEFAULT_DOMAIN_NAME}
+# App ID: use CLI arg, auto-derive if name was given via CLI, or prompt
+if [ -n "$CLI_ID" ]; then
+  APP_ID="$CLI_ID"
+else
+  DEFAULT_APP_ID=$(generate_app_id "$APP_NAME")
+  if [ -n "$CLI_NAME" ]; then
+    APP_ID="$DEFAULT_APP_ID"
+  else
+    read -p "App ID (Default: "${DEFAULT_APP_ID}"): " APP_ID
+    APP_ID=${APP_ID:-$DEFAULT_APP_ID}
+  fi
+fi
+
+# Domain: use CLI arg, auto-derive if any CLI args were given, or prompt
+if [ -n "$CLI_DOMAIN" ]; then
+  DOMAIN_NAME="$CLI_DOMAIN"
+else
+  DEFAULT_DOMAIN_NAME="$APP_ID.$DEFAULT_DOMAIN_FOR_SUBDOMAINS"
+  if [ -n "$CLI_NAME" ] || [ -n "$CLI_ID" ]; then
+    DOMAIN_NAME="$DEFAULT_DOMAIN_NAME"
+  else
+    read -p "URL (Default: "${DEFAULT_DOMAIN_NAME}"): " DOMAIN_NAME
+    DOMAIN_NAME=${DOMAIN_NAME:-$DEFAULT_DOMAIN_NAME}
+  fi
+fi
 
 echo " "
 
@@ -40,9 +71,13 @@ echo "URL: https://$DOMAIN_NAME"
 
 echo " "
 
-# Prompt for sudo password
-read -s -p "Enter sudo password: " SUDO_PASSWORD
-echo
+# Sudo password: use DREAMCOMPUTE_LEO_PASSWORD env var or prompt
+if [ -n "${DREAMCOMPUTE_LEO_PASSWORD:-}" ]; then
+  SUDO_PASSWORD="$DREAMCOMPUTE_LEO_PASSWORD"
+else
+  read -s -p "Enter sudo password: " SUDO_PASSWORD
+  echo
+fi
 
 # Function to keep sudo session alive
 keep_sudo_alive() {
