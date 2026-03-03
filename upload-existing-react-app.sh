@@ -19,11 +19,12 @@ export NVM_DIR="/home/$USER/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
 # Parse CLI arguments
-CLI_ID="" CLI_DOMAIN=""
+CLI_ID="" CLI_DOMAIN="" CLI_PRIVATE=""
 while [[ $# -gt 0 ]]; do
   case $1 in
     --app-id) CLI_ID="$2"; shift 2 ;;
     --domain) CLI_DOMAIN="$2"; shift 2 ;;
+    --private) CLI_PRIVATE="true"; shift ;;
     *) echo "Unknown option: $1"; exit 1 ;;
   esac
 done
@@ -45,6 +46,22 @@ else
   else
     read -p "URL (Default: "${DEFAULT_DOMAIN_NAME}"): " DOMAIN_NAME
     DOMAIN_NAME=${DOMAIN_NAME:-$DEFAULT_DOMAIN_NAME}
+  fi
+fi
+
+# GitHub repo visibility: use CLI flag or prompt
+if [ -n "$CLI_PRIVATE" ]; then
+  GITHUB_PRIVATE="true"
+else
+  if [ -n "$CLI_ID" ]; then
+    GITHUB_PRIVATE="false"
+  else
+    read -p "Make GitHub repo private? (y/n, Default: n): " PRIVATE_ANSWER
+    if [[ "$PRIVATE_ANSWER" =~ ^[Yy] ]]; then
+      GITHUB_PRIVATE="true"
+    else
+      GITHUB_PRIVATE="false"
+    fi
   fi
 fi
 
@@ -191,11 +208,69 @@ else
     echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot create post-receive hook"
 fi
 
+# Set up GitHub repository
+GITHUB_USER="leomancini"
+DEPLOY_KEY_PATH="${DREAMCOMPUTE_DEPLOY_KEY_PATH:-$HOME/.ssh/github_deploy_key}"
+
+if [ "$GITHUB_PRIVATE" = "true" ]; then
+  VISIBILITY="--private"
+else
+  VISIBILITY="--public"
+fi
+
+# Create GitHub repo (no local source to push — user will push from their machine)
+if gh repo create "$GITHUB_USER/$APP_ID" $VISIBILITY; then
+    echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Created GitHub repo at github.com/$GITHUB_USER/$APP_ID"
+else
+    echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot create GitHub repo"
+fi
+
+# Set deploy key secret
+if [ -f "$DEPLOY_KEY_PATH" ]; then
+    if gh secret set DREAMCOMPUTE_DEPLOY_KEY --repo "$GITHUB_USER/$APP_ID" < "$DEPLOY_KEY_PATH"; then
+        echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Set DREAMCOMPUTE_DEPLOY_KEY secret"
+    else
+        echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot set deploy key secret"
+    fi
+else
+    echo -e "${BOLD_RED}WARNING${END_COLOR} Deploy key not found at $DEPLOY_KEY_PATH"
+    echo "  Set DREAMCOMPUTE_DEPLOY_KEY_PATH env var or place key at ~/.ssh/github_deploy_key"
+    echo "  Then run: gh secret set DREAMCOMPUTE_DEPLOY_KEY --repo $GITHUB_USER/$APP_ID < \$KEY_PATH"
+fi
+
 # Show confirmation messages
 echo -e "\n------------------------------------"
 echo -e "--------------- ${BOLD}DONE${END_COLOR} ---------------"
 echo -e "------------------------------------ \n"
 echo -e "${BOLD}*** $APP_ID is now set up! ***${END_COLOR}\n"
 echo -e "* Visit ${BOLD}https://$DOMAIN_NAME${END_COLOR} to see the new site"
-echo -e "\n* Add this remote and push to deploy: \n${BOLD}git remote add prod $USER@$SERVER:$REPOS_DIRECTORY/$APP_ID.git${END_COLOR}"
+echo -e "\n* From your local project, add the GitHub remote, create the deploy workflow, and push:"
+echo -e "${BOLD}cd your-project${END_COLOR}"
+echo -e "${BOLD}git remote add origin git@github.com:$GITHUB_USER/$APP_ID.git${END_COLOR}"
+echo -e ""
+echo -e "Then create ${BOLD}.github/workflows/deploy.yml${END_COLOR} with:"
+cat << INSTRUCTIONS_EOF
+  name: Deploy to dreamcompute-leo
+  on:
+    push:
+      branches: [main]
+  jobs:
+    deploy:
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v4
+          with: { fetch-depth: 0 }
+        - name: Set up SSH
+          run: |
+            mkdir -p ~/.ssh
+            echo "\${{ secrets.DREAMCOMPUTE_DEPLOY_KEY }}" > ~/.ssh/id_ed25519
+            chmod 600 ~/.ssh/id_ed25519
+            ssh-keyscan root.noshado.ws >> ~/.ssh/known_hosts
+        - name: Deploy
+          run: |
+            git remote add dreamcompute-leo $USER@$SERVER:$REPOS_DIRECTORY/$APP_ID.git
+            git push dreamcompute-leo main
+INSTRUCTIONS_EOF
+echo -e ""
+echo -e "Then push: ${BOLD}git push -u origin main${END_COLOR}"
 echo -e " "

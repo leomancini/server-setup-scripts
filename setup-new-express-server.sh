@@ -23,7 +23,7 @@ generate_service_id() {
 }
 
 # Parse CLI arguments
-CLI_NAME="" CLI_ID="" CLI_DOMAIN="" CLI_ANTHROPIC="" CLI_ANTHROPIC_KEY=""
+CLI_NAME="" CLI_ID="" CLI_DOMAIN="" CLI_ANTHROPIC="" CLI_ANTHROPIC_KEY="" CLI_PRIVATE=""
 while [[ $# -gt 0 ]]; do
   case $1 in
     --name) CLI_NAME="$2"; shift 2 ;;
@@ -31,6 +31,7 @@ while [[ $# -gt 0 ]]; do
     --domain) CLI_DOMAIN="$2"; shift 2 ;;
     --anthropic) CLI_ANTHROPIC="true"; shift ;;
     --anthropic-key) CLI_ANTHROPIC="true"; CLI_ANTHROPIC_KEY="$2"; shift 2 ;;
+    --private) CLI_PRIVATE="true"; shift ;;
     *) echo "Unknown option: $1"; exit 1 ;;
   esac
 done
@@ -94,6 +95,22 @@ if [ "$ENABLE_ANTHROPIC" = "true" ]; then
   else
     read -s -p "Enter Anthropic API key: " ANTHROPIC_KEY
     echo
+  fi
+fi
+
+# GitHub repo visibility: use CLI flag or prompt
+if [ -n "$CLI_PRIVATE" ]; then
+  GITHUB_PRIVATE="true"
+else
+  if [ -n "$CLI_NAME" ] || [ -n "$CLI_ID" ]; then
+    GITHUB_PRIVATE="false"
+  else
+    read -p "Make GitHub repo private? (y/n, Default: n): " PRIVATE_ANSWER
+    if [[ "$PRIVATE_ANSWER" =~ ^[Yy] ]]; then
+      GITHUB_PRIVATE="true"
+    else
+      GITHUB_PRIVATE="false"
+    fi
   fi
 fi
 
@@ -422,11 +439,85 @@ else
 	echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot create post-receive hook"
 fi
 
+# Set up GitHub repository
+GITHUB_USER="leomancini"
+DEPLOY_KEY_PATH="${DREAMCOMPUTE_DEPLOY_KEY_PATH:-$HOME/.ssh/github_deploy_key}"
+
+if [ "$GITHUB_PRIVATE" = "true" ]; then
+  VISIBILITY="--private"
+else
+  VISIBILITY="--public"
+fi
+
+# Create deploy workflow
+mkdir -p $SERVICES_DIRECTORY/$SERVICE_ID/.github/workflows
+cat > $SERVICES_DIRECTORY/$SERVICE_ID/.github/workflows/deploy.yml << 'WORKFLOW_EOF'
+name: Deploy to dreamcompute-leo
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DREAMCOMPUTE_DEPLOY_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan root.noshado.ws >> ~/.ssh/known_hosts
+
+      - name: Deploy
+        run: |
+          git remote add dreamcompute-leo leo@root.noshado.ws:REMOTE_PATH
+          git push dreamcompute-leo main
+WORKFLOW_EOF
+
+# Replace REMOTE_PATH placeholder with actual path
+sed -i "s|REMOTE_PATH|$SERVICES_DIRECTORY/$SERVICE_ID|g" $SERVICES_DIRECTORY/$SERVICE_ID/.github/workflows/deploy.yml
+
+# Commit the workflow
+cd $SERVICES_DIRECTORY/$SERVICE_ID
+git add .github/
+git commit -m "Add GitHub Actions deploy workflow" > /dev/null
+
+# Create GitHub repo and push
+if gh repo create "$GITHUB_USER/$SERVICE_ID" $VISIBILITY; then
+    echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Created GitHub repo at github.com/$GITHUB_USER/$SERVICE_ID"
+    git remote add origin "git@github.com:$GITHUB_USER/$SERVICE_ID.git"
+    git push -u origin main
+else
+    echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot create GitHub repo"
+fi
+
+# Set deploy key secret
+if [ -f "$DEPLOY_KEY_PATH" ]; then
+    if gh secret set DREAMCOMPUTE_DEPLOY_KEY --repo "$GITHUB_USER/$SERVICE_ID" < "$DEPLOY_KEY_PATH"; then
+        echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Set DREAMCOMPUTE_DEPLOY_KEY secret"
+    else
+        echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot set deploy key secret"
+    fi
+else
+    echo -e "${BOLD_RED}WARNING${END_COLOR} Deploy key not found at $DEPLOY_KEY_PATH"
+    echo "  Set DREAMCOMPUTE_DEPLOY_KEY_PATH env var or place key at ~/.ssh/github_deploy_key"
+    echo "  Then run: gh secret set DREAMCOMPUTE_DEPLOY_KEY --repo $GITHUB_USER/$SERVICE_ID < \$KEY_PATH"
+fi
+
 # Show confirmation messages depending on optional steps
 echo -e "\n------------------------------------"
 echo -e "--------------- ${BOLD}DONE${END_COLOR} ---------------"
 echo -e "------------------------------------ \n"
 echo -e "${BOLD}*** $SERVICE_ID is now set up! ***${END_COLOR}\n"
 echo -e "* Visit ${BOLD}https://$DOMAIN_NAME${END_COLOR} to see the new site"
-echo -e "\n* Clone this repository and push to origin to deploy: \n${BOLD}git clone $USER@$SERVER:$SERVICES_DIRECTORY/$SERVICE_ID${END_COLOR}"
+echo -e "\n* Clone from GitHub and push to deploy:"
+echo -e "${BOLD}git clone git@github.com:$GITHUB_USER/$SERVICE_ID.git${END_COLOR}"
 echo -e " "
