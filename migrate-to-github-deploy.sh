@@ -125,7 +125,7 @@ migrate_project() {
 
   # Force-push to GitHub (DreamCompute is authoritative)
   echo "  Force-pushing ${main_branch} to GitHub..."
-  if ! git push --force origin "${main_branch}:main" 2>&1; then
+  if ! git push --force --set-upstream origin "${main_branch}:main" 2>&1; then
     echo "  FAILED: Force-push failed"
     FAILED+=("$name (push failed)")
     return
