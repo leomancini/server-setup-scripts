@@ -9,53 +9,9 @@ DEPLOY_KEY_PATH="$HOME/.ssh/id_ed25519"
 GH_USER="leomancini"
 SERVER_HOST="leo@root.noshado.ws"
 
-# Services to migrate (24)
-SERVICES=(
-  azlm-crochet-frame-server
-  city-tracker
-  fcc-kiosk-server-bot-proxy
-  feed-box-api
-  grocery-personality-test-server
-  headlines-server
-  local-news-reader
-  manesi-button-events-router
-  nyc-bus-service-alerts-api
-  parking-sign-reminder-generator-server
-  play-machine-server
-  prediction-markets-research-api
-  puzzles
-  region-tracker
-  screenshot-to-calendar-event-server
-  skyline-data-api
-  somethin-meter-proxy
-  sound-machine-phone-service
-  split-tracker
-  street-metrics
-  switchbot-controller
-  this-or-that-machine-server
-  travel-guide-server
-  wave-server
-)
-
-# React apps to migrate (16)
-REACT_APPS=(
-  ai-phone-remote-control
-  azlm-crochet-frame-settings
-  feed-box-app
-  iphone-react-viewer-demo
-  live-world-cameras
-  live-world-stats
-  nyc-traffic-cameras
-  parking-sign-reminder-generator-client
-  play-machine-companion-app
-  play-machine-os
-  rig-case-client
-  screenshot-to-calendar-event-client
-  sound-machine-display
-  this-or-that-machine-admin
-  this-or-that-machine-votes-viewer
-  travel-guide-client
-)
+# Discover services and react apps from the filesystem
+mapfile -t SERVICES < <(find /home/leo/services -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort)
+mapfile -t REACT_APPS < <(find /home/leo/react-apps -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort)
 
 SUCCEEDED=()
 SKIPPED=()
