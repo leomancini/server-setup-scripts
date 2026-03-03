@@ -422,6 +422,12 @@ cd '"$SERVICES_DIRECTORY/$SERVICE_ID"' || { echo "Failed to change directory"; e
 echo "Installing dependencies"
 npm install --no-save || { echo "npm install failed"; exit 1; }
 
+# Build if a build script exists
+if node -e "const p=require('"'"'./package.json'"'"'); process.exit(p.scripts && p.scripts.build ? 0 : 1)" 2>/dev/null; then
+  echo "Building"
+  npm run build || { echo "Build failed"; exit 1; }
+fi
+
 echo "Restarting via PM2"
 # Kill any stale process on the port before restarting
 STALE_PID=$(lsof -ti :'"$PORT"' -sTCP:LISTEN 2>/dev/null)

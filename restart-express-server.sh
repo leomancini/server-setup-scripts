@@ -93,6 +93,15 @@ else
     echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot install node modules"
 fi
 
+# Build if a build script exists
+if node -e "const p=require('./package.json'); process.exit(p.scripts && p.scripts.build ? 0 : 1)" 2>/dev/null; then
+    if npm run build; then
+        echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Built for production"
+    else
+        echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot build for production"
+    fi
+fi
+
 # Kill any stale process on the port before restarting
 PORT=$(jq -r '.port' "$SETUP_LOG_FILE")
 if [ -n "$PORT" ] && [ "$PORT" != "null" ]; then
