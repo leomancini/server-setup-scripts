@@ -114,7 +114,8 @@ if [ -n "$PORT" ] && [ "$PORT" != "null" ]; then
 fi
 
 # Restart via PM2
-if pm2 restart "$SERVICE_ID" && pm2 save; then
+pm2 stop "$SERVICE_ID" 2>/dev/null
+if pm2 start "$SERVICE_ID" && pm2 save; then
     echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Restarted $SERVICE_ID via PM2"
 else
     echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot restart $SERVICE_ID via PM2"

@@ -568,14 +568,15 @@ echo "Building app for production"
 npm run build || { echo "Build failed"; exit 1; }
 
 echo "Restarting via PM2"
-# Kill any stale process on the port before restarting
+pm2 stop '"$APP_ID"' 2>/dev/null
+# Kill any stale process on the port before starting
 STALE_PID=$(lsof -ti :'"$PORT"' -sTCP:LISTEN 2>/dev/null)
 if [ -n "$STALE_PID" ]; then
   echo "Killing stale process on port '"$PORT"' (PID $STALE_PID)"
   kill -9 "$STALE_PID" 2>/dev/null
   sleep 1
 fi
-pm2 restart '"$APP_ID"'
+pm2 start '"$APP_ID"'
 pm2 save
 
 echo -e "\e[1;32mSUCCESS\e[0m Deployed '"$APP_ID"'"' | sudo tee $APPS_DIRECTORY/$APP_ID/.git/hooks/post-receive > /dev/null; then
