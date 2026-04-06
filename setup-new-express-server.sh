@@ -403,7 +403,7 @@ if node -e "const p=require('"'"'./package.json'"'"'); process.exit(p.scripts &&
 fi
 
 echo "Restarting via PM2"
-pm2 stop '"$SERVICE_ID"' 2>/dev/null
+pm2 stop '"$SERVICE_ID"' >/dev/null 2>&1
 # Kill any stale process on the port before starting
 STALE_PID=$(lsof -ti :'"$PORT"' -sTCP:LISTEN 2>/dev/null)
 if [ -n "$STALE_PID" ]; then
@@ -411,8 +411,8 @@ if [ -n "$STALE_PID" ]; then
   kill -9 "$STALE_PID" 2>/dev/null
   sleep 1
 fi
-pm2 start '"$SERVICE_ID"'
-pm2 save
+pm2 start '"$SERVICE_ID"' >/dev/null 2>&1
+pm2 save >/dev/null 2>&1
 
 echo -e "\e[1;32mSUCCESS\e[0m Deployed '"$SERVICE_ID"'"' | sudo tee $SERVICES_DIRECTORY/$SERVICE_ID/.git/hooks/post-receive > /dev/null; then
 	echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Created post-receive hook"
