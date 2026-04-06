@@ -135,49 +135,23 @@ echo "Host: localhost:$PORT"
 
 echo " "
 
-# Sudo password: use DREAMCOMPUTE_LEO_PASSWORD env var or prompt
-if [ -n "${DREAMCOMPUTE_LEO_PASSWORD:-}" ]; then
-  SUDO_PASSWORD="$DREAMCOMPUTE_LEO_PASSWORD"
-else
-  read -s -p "Enter sudo password: " SUDO_PASSWORD
-  echo
-fi
 
-# Function to keep sudo session alive
-keep_sudo_alive() {
-    while true; do
-        echo "$SUDO_PASSWORD" | sudo -S -v > /dev/null 2>&1
-        sleep 60
-    done
-}
 
 echo " "
 
-# Initial check to see if the provided password is correct
-if ! echo "$SUDO_PASSWORD" | sudo -kS echo > /dev/null 2>&1; then
-    echo -e "${BOLD_RED}FAILED${END_COLOR} Password incorrect"
-    echo " "
-    exit 1
-fi
 
-# Start the keep-alive function in the background
-keep_sudo_alive &
-SUDO_KEEP_ALIVE_PID=$!
 
-# Make sure to kill the keep-alive process on exit
-trap 'kill $SUDO_KEEP_ALIVE_PID' EXIT
 
-echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Password correct"
 
 # Create root directory for service
-if echo "$SUDO_PASSWORD" | sudo -S mkdir -p "$SERVICES_DIRECTORY/$SERVICE_ID"; then
+if sudo mkdir -p "$SERVICES_DIRECTORY/$SERVICE_ID"; then
     echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Created root directory at $SERVICES_DIRECTORY/$SERVICE_ID"
 else
     echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot create root directory at $SERVICES_DIRECTORY/$SERVICE_ID"
 fi
 
 # Change permissions for services directory to specified user
-if echo "$SUDO_PASSWORD" | sudo -S chown -R "$USER" "$SERVICES_DIRECTORY/$SERVICE_ID"; then
+if sudo chown -R "$USER" "$SERVICES_DIRECTORY/$SERVICE_ID"; then
     echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Changed permissions to $USER"
 else
     echo -e "${BOLD_RED}FAILED${END_COLOR} Cannot change permissions to $USER"

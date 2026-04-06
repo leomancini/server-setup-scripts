@@ -73,39 +73,13 @@ echo "URL: https://$DOMAIN_NAME"
 
 echo " "
 
-# Sudo password: use DREAMCOMPUTE_LEO_PASSWORD env var or prompt
-if [ -n "${DREAMCOMPUTE_LEO_PASSWORD:-}" ]; then
-  SUDO_PASSWORD="$DREAMCOMPUTE_LEO_PASSWORD"
-else
-  read -s -p "Enter sudo password: " SUDO_PASSWORD
-  echo
-fi
 
-# Function to keep sudo session alive
-keep_sudo_alive() {
-    while true; do
-        echo "$SUDO_PASSWORD" | sudo -S -v > /dev/null 2>&1
-        sleep 60
-    done
-}
 
 echo " "
 
-# Initial check to see if the provided password is correct
-if ! echo "$SUDO_PASSWORD" | sudo -kS echo > /dev/null 2>&1; then
-    echo -e "${BOLD_RED}FAILED${END_COLOR} Password incorrect"
-    echo " "
-    exit 1
-fi
 
-# Start the keep-alive function in the background
-keep_sudo_alive &
-SUDO_KEEP_ALIVE_PID=$!
 
-# Make sure to kill the keep-alive process on exit
-trap 'kill $SUDO_KEEP_ALIVE_PID' EXIT
 
-echo -e "${BOLD_GREEN}SUCCESS${END_COLOR} Password correct"
 
 # Create root directory for app
 if sudo mkdir $APPS_DIRECTORY/$APP_ID; then
