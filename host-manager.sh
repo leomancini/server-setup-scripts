@@ -256,8 +256,14 @@ display_git_remotes() {
         if [ -n "$option" ]; then
             option=$(echo "$option" | tr -d '\r\n' | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//')
             local full_path="$directory/$option"
-            local git_remote="$USER@$SERVER:$full_path"
-            display_lines+=("  ${BOLD}${COLOR_BLUE}$option${RESET}: ${COLOR_WHITE}$git_remote${RESET}")
+            local github_remote=$(execute_ssh_command "cd $full_path && git remote get-url origin 2>/dev/null" "false")
+            github_remote=$(echo "$github_remote" | tr -d '\r\n')
+            if [ -n "$github_remote" ]; then
+                display_lines+=("  ${BOLD}${COLOR_BLUE}$option${RESET}: ${COLOR_WHITE}$github_remote${RESET}")
+            else
+                local server_remote="$USER@$SERVER:$full_path"
+                display_lines+=("  ${BOLD}${COLOR_BLUE}$option${RESET}: ${COLOR_WHITE}$server_remote${RESET} ${COLOR_RED}(no GitHub remote)${RESET}")
+            fi
         fi
     done
 
